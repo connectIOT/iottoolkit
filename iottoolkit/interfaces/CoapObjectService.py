@@ -20,7 +20,7 @@ class CoapObjectService(object):
             self._port = port
             
         if baseObject == None:
-            from SmartObject.SmartObject import SmartObject
+            from core.SmartObject import SmartObject
             self._baseObject = SmartObject()
         else:
             self._baseObject = baseObject
