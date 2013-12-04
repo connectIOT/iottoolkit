@@ -1,0 +1,6 @@
+ObjectService Base Classes
+
+HttpObjectService creates a wsgi based REST object server from using restlite and restObject
+
+CoapObjectService creates a CoAP service instance
+
