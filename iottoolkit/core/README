@@ -1,0 +1,76 @@
+SmartObject base classes module
+
+The base abstract class is Resource, from which the specific 
+content types are derived for the various functional resources.
+
+The SmartObject is itself a Resource that contains the other resource
+types
+
+For a description of the functional roles of the specific resource
+types, see http://iot-datamodels.blogspot.com
+
+The structure of a SmartObject is derived through semantic indirection 
+or simple URI-Path mapping. Resources contained within a SmartObject
+are by default available at the URL ../SmartObject/Resource which
+corresponds to the Object notation SmartObject.Resource
+
+All Resource types potentially have Create, Delete, Set, and Get 
+methods for interacting with their default functional properties.
+The precise semantic definition of those operations is content 
+dependent and defined by overriding the default methods for each 
+specific resource type. For Example, the GET method for the Observable
+Property returns a JSON or XML structured data type by default. 
+The GET method for a Description returns a graph of RDF triples 
+matching an abstract description. 
+
+SmartObject Resource Encapsulation
+
+The Structure of a SmartObject is as follows:
+
+SmartObject
+  |
+SmartObject
+(...)
+SmartObject
+  |
+SmartObject/Description (Default Property)
+SmartObject/Agent
+SmartObject/ObservableProperty
+(...)
+SmartObject/ObservableProperty
+				|
+			SmartObject/ObservableProperty/PropertyOfInterest (Default Property)
+			SmartObject/ObservableProperty/Description
+			SmartObject/ObservableProperty/Observers
+
+Observable Properties and the Data Model
+
+Observable Properties represent the data from sensors and other connected objects, 
+or the data used to create an indication or actuation
+
+The value is represented by a JSON object that contains string or number or other
+complex representations of the observations and controls 
+
+The Description contains RDF representing the data model of the SmartObject anf the
+connected objects it represents. There is a graph describing the overall SmartObject
+structure, and individual graphs describing each Observable Property's data model
+
+Observers, Agents, and the event model
+
+An Observer watches a resource and may perform an action when the state of the
+resource changes, for example on updates.
+
+Observers connect REST endpoints with the event model. The currently implemented
+observer classes are httpPublisher, httpSubscriber, handlerNotifier. 
+
+Http publishers and subscribers create push connections that propagate updates 
+between multiple instances of ObservableProperties that represent a particular 
+sensor or actuator value.
+
+Handler notifiers invoke software handlers that run code to locally respond to 
+state changes of ObservableProperties. For example, a thermostat handler would 
+use Observers associated with room temperature sensors and temperature setpoint
+ObservableProperties in order to update the heater controls.
+
+Agents contain the handlers that can be invoked by Observers. An Instance of a 
+software handler is created in an Agent container by specifying the handler class
