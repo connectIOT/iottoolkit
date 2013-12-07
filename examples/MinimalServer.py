@@ -15,7 +15,10 @@ if __name__ == '__main__' :
     # make an empty instance of a SmartObject shared by 2 interfaces, 
     # CoAP and HTTP, default object root and default ports 5683 and 8000
     # CoAP service makes the base object and it is passed to the http service constructor
+    # Doesn't matter which one first
+    
     HttpObjectService( CoapObjectService().baseObject ) 
+    #CoapObjectService( HttpObjectService().baseObject ) 
           
     try:
     # register handlers etc.
