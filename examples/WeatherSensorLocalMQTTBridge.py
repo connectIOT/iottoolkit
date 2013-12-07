@@ -7,15 +7,15 @@ created to demonstrate how endpoints can be discovered by reading the graph meta
 
 @author: mjkoster
 '''
-from SmartObject.SmartObject import SmartObject
-from SmartObject.Description import Description
-from SmartObject.ObservableProperty import ObservableProperty
-from SmartObject.Observers import Observers
-from SmartObject.PropertyOfInterest import PropertyOfInterest
+from core.SmartObject import SmartObject
+from core.Description import Description
+from core.ObservableProperty import ObservableProperty
+from core.Observers import Observers
+from core.PropertyOfInterest import PropertyOfInterest
 from rdflib.term import Literal, URIRef
 from rdflib.namespace import RDF, RDFS, XSD, OWL
-from ObjectService.HttpObjectService import HttpObjectService
-from ObjectService.CoapObjectService import CoapObjectService
+from interfaces.HttpObjectService import HttpObjectService
+from interfaces.CoapObjectService import CoapObjectService
 from time import sleep
 import sys
 

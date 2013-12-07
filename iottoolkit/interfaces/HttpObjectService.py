@@ -125,19 +125,24 @@ class HttpObjectService(object):
             
         self.resources = self._baseObject.resources
         
-        if port != None or baseObject == None:
-            self.start()
+        self.start(self._port)
+        
     @property        
     def baseObject(self):
         return self._baseObject
     
     def start(self, port=None): 
-        if port!=None:
+        if port==None:
+            self._port = 8000 # default port 8000
+        else:
             self._port=port # override port on start if supplied
+            
         httpThread = threading.Thread(target = self._startHttpObjectService)
         httpThread.daemon = True
         httpThread.start()
         self._baseObject.Properties.update({'httpService': 'http://' + gethostname() + ':' + repr(self._port)})
+        print 'HTTP server started at', self._baseObject.Properties.get('httpService')
+       
        
     def _startHttpObjectService(self):
         from wsgiref.simple_server import make_server
