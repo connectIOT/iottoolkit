@@ -16,7 +16,7 @@ class RespGraph(Graph):
     # add a method to convert to XML for RESTlite represent method
     def _xml_(self):
         return self.serialize(format='xml')
-        
+           
     def _json_(self):
         return self.serialize(format='json-ld')
  
