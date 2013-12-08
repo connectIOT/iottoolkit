@@ -18,7 +18,7 @@ class RespGraph(Graph):
         return self.serialize(format='xml')
            
     def _json_(self):
-        return self.serialize(format='json-ld')
+        return self.serialize(format='rdf-json')
  
 class Description (RESTfulResource):
     
@@ -33,7 +33,7 @@ class Description (RESTfulResource):
                'application/x-turtle' : 'turtle',
                'text/rdf+n3' : 'n3',
                'text/plain' : 'nt' ,
-               'application/json' : 'json-ld'
+               'application/json' : 'rdf-json'
                }
         
 
