@@ -16,19 +16,24 @@ class RespGraph(Graph):
     # add a method to convert to XML for RESTlite represent method
     def _xml_(self):
         return self.serialize(format='xml')
+        
+    def _json_(self):
+        return self.serialize(format='json-ld')
  
 class Description (RESTfulResource):
     
     def __init__(self, parentObject=None, resourceName=''):
         RESTfulResource.__init__(self, parentObject, resourceName)
         self.graph = Graph()
-        self._parseContentTypes = [ 'text/plain' , 'application/rdf+xml' , 'text/rdf+n3' ]
-        self._serializeContentTypes = [ 'text/xml' , 'text/plain', 'application/rdf+xml' , 'application/x-turtle' , 'text/rdf+n3' ]
+        self._parseContentTypes = [ 'text/plain' , 'application/rdf+xml' , 'text/rdf+n3', 'application/json' ]
+        self._serializeContentTypes = [ 'text/xml' , 'text/plain', 'application/rdf+xml' ,\
+                                        'application/x-turtle' , 'text/rdf+n3' , 'application/json']
         self.fmt = { 'text/xml' : 'xml', 
                'application/rdf+xml' : 'xml',
                'application/x-turtle' : 'turtle',
                'text/rdf+n3' : 'n3',
-               'text/plain' : 'nt'
+               'text/plain' : 'nt' ,
+               'application/json' : 'json-ld'
                }
         
 
