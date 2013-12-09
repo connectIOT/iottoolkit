@@ -5,6 +5,23 @@ LinkFormatProxy provides a Core Link-Format interface to a SmartObject Descripti
 The Link-Format Interface provides a subset of the relations found in the description
 based on bindings of Link-Format attributes to RDF Predicates
 
+This is meant to expose an object at .well-known/core in the object hierarchy where
+.well-known is a nested smart object and core is an instance of this proxy
+
+The CoAP server maps POST to the set operation and PUT to the create operation
+The HTTP server maps PUT to the set operation and POST to the create operation
+
+core-link-format examples:
+
+<subject1>;predicate="object";predicate="object",<sublect2>...
+
+<sensors/rhvWeather-01/outdoor_humidity>;rt="humidity";if="sensor",
+<sensors/rhvWeather-01/daily_rain>;rt="depth";if="sensor"
+
+multiple objects are separated by whitespace
+<subject1>;predicate="object1 object2 object3"
+</leds/top/right>;color="red orange yellow green blue white"
+
 @author: mjkoster
 '''
 

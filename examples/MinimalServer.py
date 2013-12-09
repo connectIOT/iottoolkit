@@ -10,6 +10,15 @@ from interfaces.HttpObjectService import HttpObjectService
 from interfaces.CoapObjectService import CoapObjectService
 from time import sleep
 
+#workaround to register rdf JSON plugins 
+import rdflib
+from rdflib.plugin import Serializer, Parser
+rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
+rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+rdflib.plugin.register('rdf-json', Serializer, 'rdflib_rdfjson.rdfjson_serializer', 'RdfJsonSerializer')
+rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonSerializer')
+
+
 if __name__ == '__main__' :
     
     # make an empty instance of a SmartObject shared by 2 interfaces, 
