@@ -32,12 +32,12 @@ class ResourceList(object):
     
     # to enable create-on-publish
     def set(self, objectGraph):
-        self._buildRecursive(objectGraph)
+        self._buildRecursive(self._object, objectGraph)
     
     # normal create
     # object graph is the python list of constructor dictionaries with their lists etc that results from json.loads
     def create(self, objectGraph):
-        self._buildRecursive(objectGraph)
+        self._buildRecursive(self._object, objectGraph)
                            
     def _listRecursive(self, object): #Serialize the object tree below this object to JSON
         resources = object.resources
@@ -70,7 +70,7 @@ class ResourceList(object):
             newConstructor = newList[0]
             if newConstructor != None : 
                 newObject = currentObject.create(newConstructor) # the object constructor
-                if newObject['resourceClass'] in self._containerClasses:
+                if newConstructor['resourceClass'] in self._containerClasses:
                     # descend into container
                     self._buildRecursive(newObject, newList[1]) # the object's list of sub-objects (resources)
 
