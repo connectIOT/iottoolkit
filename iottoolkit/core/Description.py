@@ -25,20 +25,47 @@ class Description (RESTfulResource):
     def __init__(self, parentObject=None, resourceName=''):
         RESTfulResource.__init__(self, parentObject, resourceName)
         self.graph = Graph()
-        self._parseContentTypes = [ 'text/plain' , 'application/rdf+xml' , 'text/rdf+n3', 'application/json', \
-                                   'application/json+ld' ]
-        self._serializeContentTypes = [ 'application/json', 'text/xml' , 'application/rdf+xml' ,\
-                                        'application/x-turtle' , 'text/rdf+n3',  \
-                                        'application/json+ld', 'text/plain' ]
+        self._parseContentTypes = [ 
+                                   'application/json',
+                                   'application/rdf+xml' , 
+                                   'application/json+ld',
+                                   'text/turtle',
+                                   'text/n3', 
+                                   'application/n-triples',
+                                   'application/n-quads',
+                                   'application/trix',
+                                   'text/trig',
+                                   ]
+        
+        self._serializeContentTypes = [ 
+                                       'application/json', 
+                                       'application/rdf+xml' ,
+                                       'application/json+ld', 
+                                       'text/turtle',
+                                       'text/n3',
+                                       'application/n-triples',
+                                       'application/n-quads', # context
+                                       'application/trix', # context
+                                       'text/trig',
+                                       'text/xml', 
+                                       'text/plain' 
+                                       ]
+        
         # FIXME look at passing cType strings into parser selector, RDFlib plugins register as cType handlers
-        self.fmt = { 'text/xml' : 'xml', 
-               'application/rdf+xml' : 'xml',
-               'application/x-turtle' : 'turtle',
-               'text/rdf+n3' : 'n3',
-               'text/plain' : 'nt' ,
-               'application/json' : 'rdf-json',
-               'application/json+ld' : 'json-ld'
-               }
+        self.fmt = {
+                    'text/xml' : 'xml', 
+                    'application/rdf+xml' : 'xml',
+                    'text/turtle' : 'turtle',
+                    'test/trig' : 'trig',
+                    'text/n3' : 'n3',
+                    'application/n-triples' : 'nt',
+                    'application/trix' : 'trix',
+                    'application/n-quads' : 'nquads',
+                    'text/trig' : 'trig',
+                    'application/json' : 'rdf-json',
+                    'application/json+ld' : 'json-ld',
+                    'text/plain' : 'xml' 
+                    }
         
 
     # Description get method returns triples can be invoked via the 
