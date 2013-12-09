@@ -25,15 +25,19 @@ class Description (RESTfulResource):
     def __init__(self, parentObject=None, resourceName=''):
         RESTfulResource.__init__(self, parentObject, resourceName)
         self.graph = Graph()
-        self._parseContentTypes = [ 'text/plain' , 'application/rdf+xml' , 'text/rdf+n3', 'application/json' ]
+        self._parseContentTypes = [ 'text/plain' , 'application/rdf+xml' , 'text/rdf+n3', 'application/json', \
+                                   'application/json-ld' ]
         self._serializeContentTypes = [ 'text/xml' , 'text/plain', 'application/rdf+xml' ,\
-                                        'application/x-turtle' , 'text/rdf+n3' , 'application/json']
+                                        'application/x-turtle' , 'text/rdf+n3' , 'application/json', \
+                                        'application/json-ld' ]
+        # FIXME look at passing cType strings into parser selector, RDFlib plugins register as cType handlers
         self.fmt = { 'text/xml' : 'xml', 
                'application/rdf+xml' : 'xml',
                'application/x-turtle' : 'turtle',
                'text/rdf+n3' : 'n3',
                'text/plain' : 'nt' ,
-               'application/json' : 'rdf-json'
+               'application/json' : 'rdf-json',
+               'application/json-ld' : 'json-ld'
                }
         
 
