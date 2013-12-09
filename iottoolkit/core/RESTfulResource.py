@@ -41,12 +41,15 @@ class ResourceList(object):
                 resourceConstructor = {'resourceName': resourceName, \
                                        'resourceClass': resourceClass}
                 if resourceClass in self._containerClasses:
-                    resourceList.append([ resourceConstructor , self._listRecursive(childObject) ] )# go into containers
+                    # go down into containers
+                    resourceList.append([ resourceConstructor , self._listRecursive(childObject) ] )
                 else:
                     if resourceClass == 'Description': 
+                        # have rdf-json serializer make JSON and then python structure to pack into the big graph
                         graph = json.loads( childObject.serialize(childObject.get(),'application/json') )
                         resourceConstructor.update({'graph' : graph })
                     else:
+                        # FIXME get returns settings except for PropertyOfInterest: add a settings endpoint/object
                         resourceConstructor.update(childObject.get())
                     resourceList.append(resourceConstructor)
         return resourceList
