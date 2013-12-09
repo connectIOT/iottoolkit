@@ -94,21 +94,20 @@ class LinkFormatProxy (RESTfulResource):
     
     def serialize(self, graph, cType):
         # assume format = link-format
-        self._linkFormatString = ''
-        self._subjStrings = []
+        self._subjects = [] # triple store returns a triple for each s,p.o so need to filter unique subjects
+        self._subjStrings = [] # accumulate a list of subject strings + link-format relation + value strings
         for self._subj in graph.subjects(None, None):
-            self._subjString = ''
-            self._subjString += '<' + str(self._subj) + '>'
-            for self._pred in graph.predicates(self._subj, None):
-                self._subjString += ';' + self._predToAttr[self._pred] + '='
-                self._objs = []
-                for self._obj in graph.objects(self._subj, self._pred):
-                    self._objs.append(self._obj)
-                self._subjString += '"' + ' '.join(self._objs) + '"'
-            graph.remove((self._subj, None, None)) # remove subjects to avoid duplicate output
-            self._subjStrings.append(self._subjString)
-        self._linkFormatString = str(','.join(self._subjStrings))
-        return self._linkFormatString
+            if self._subj not in self._subjects:
+                self._subjects.append(self._subj) # list of unique subjects to filter duplicates
+                self._subjString = '<' + str(self._subj) + '>'
+                for self._pred in graph.predicates(self._subj, None):
+                    self._subjString += ';' + self._predToAttr[self._pred] + '='
+                    self._objs = []
+                    for self._obj in graph.objects(self._subj, self._pred):
+                        self._objs.append(self._obj)
+                    self._subjString += '"' + ' '.join(self._objs) + '"'
+                self._subjStrings.append(self._subjString)
+        return str(','.join(self._subjStrings)) # collapse the list down to a string
        
     def serializeContentTypes(self) :
         return self._serializeContentTypes
