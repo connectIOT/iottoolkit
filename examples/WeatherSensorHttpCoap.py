@@ -31,7 +31,6 @@ rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'Rdf
 if __name__ == '__main__' :
     
     baseObject = HttpObjectService().baseObject # make an instance of the service, default object root and default port 8000
-    print 'httpd started at', baseObject.Properties.get('httpService')
     
     coapService = CoapObjectService(baseObject)
 

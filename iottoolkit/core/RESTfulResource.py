@@ -18,20 +18,42 @@ to content types
 @author: mjkoster
 '''
 from Resource import Resource
+import json
 
 class ResourceList(object):
     def __init__(self, listObject):
+        self._containerClasses = ['SmartObject', 'Observers', 'Agent', 'LinkFormatProxy' , 'ObservableProperty' ]
         self._object = listObject
         self.resources = {}
         
-    def get(self, recursive=None):
-        self._list = []
-        for self._resource in self._object.resources: #only list child objects
-            if self._resource not in ('l', 'Properties', 'thisObject', 'baseObject', 'parentObject' ):
-                self._list.append({'resourceName': self._object.resources[self._resource].Properties.get('resourceName'), \
-                                   'resourceClass': self._object.resources[self._resource].Properties.get('resourceClass')})
-        return self._list
-    
+        
+    def get(self):
+        return self._listRecursive(self._object)
+                           
+    def _listRecursive(self, object): #Serialize the object tree below this object to JSON
+        resources = object.resources
+        resourceList=[]
+        for resource in resources: #only list child objects
+            if resource not in ('l', 'Properties', 'thisObject', 'baseObject', 'parentObject' ):
+                childObject=resources[resource]
+                resourceName = childObject.Properties.get('resourceName')
+                resourceClass = childObject.Properties.get('resourceClass')
+                resourceConstructor = {'resourceName': resourceName, \
+                                       'resourceClass': resourceClass}
+                if resourceClass in self._containerClasses:
+                    # go down into containers
+                    resourceList.append([ resourceConstructor , self._listRecursive(childObject) ] )
+                else:
+                    if resourceClass == 'Description': 
+                        # have rdf-json serializer make JSON and then python structure to pack into the big graph
+                        graph = json.loads( childObject.serialize(childObject.get(),'application/json') )
+                        resourceConstructor.update({'graph' : graph })
+                    else:
+                        # FIXME get returns settings except for PropertyOfInterest: add a settings endpoint/object
+                        resourceConstructor.update(childObject.get())
+                    resourceList.append(resourceConstructor)
+        return resourceList
+   
 class RESTfulDictEndpoint(object): # create a resource endpoint from a property reference
     def __init__(self, dictReference):
         self.resources = {}
