@@ -29,6 +29,15 @@ class ResourceList(object):
         
     def get(self):
         return self._listRecursive(self._object)
+    
+    # to enable create-on-publish
+    def set(self, objectGraph):
+        self._buildRecursive(self._object, objectGraph)
+    
+    # normal create
+    # object graph is the python list of constructor dictionaries with their lists etc that results from json.loads
+    def create(self, objectGraph):
+        self._buildRecursive(self._object, objectGraph)
                            
     def _listRecursive(self, object): #Serialize the object tree below this object to JSON
         resources = object.resources
@@ -51,8 +60,20 @@ class ResourceList(object):
                     else:
                         # FIXME get returns settings except for PropertyOfInterest: add a settings endpoint/object
                         resourceConstructor.update(childObject.get())
-                    resourceList.append(resourceConstructor)
+                    resourceList.append([resourceConstructor])
         return resourceList
+   
+    def _buildRecursive(self, currentObject, constructorList):
+        # objectGraph is a reference to a list of lists of resource constructors, some of which are containers
+        # walk the list of objects and recursively descend into containers
+        for newList in constructorList:
+            newConstructor = newList[0]
+            if newConstructor != None : 
+                newObject = currentObject.create(newConstructor) # the object constructor
+                if newConstructor['resourceClass'] in self._containerClasses:
+                    # descend into container
+                    self._buildRecursive(newObject, newList[1]) # the object's list of sub-objects (resources)
+
    
 class RESTfulDictEndpoint(object): # create a resource endpoint from a property reference
     def __init__(self, dictReference):

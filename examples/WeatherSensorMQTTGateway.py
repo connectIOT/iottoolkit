@@ -19,6 +19,14 @@ from interfaces.CoapObjectService import CoapObjectService
 from time import sleep
 import sys
 
+#workaround to register rdf JSON plugins 
+import rdflib
+from rdflib.plugin import Serializer, Parser
+rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
+rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+rdflib.plugin.register('rdf-json', Serializer, 'rdflib_rdfjson.rdfjson_serializer', 'RdfJsonSerializer')
+rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonSerializer')
+
 
 if __name__ == '__main__' :
     
