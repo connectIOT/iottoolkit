@@ -11,6 +11,7 @@ work on the sub-graphs used by get and set methods for discovery and linkage
 from RESTfulResource import RESTfulResource
 from rdflib.graph import Graph
 from Observers import Observers
+import json
 
 class RespGraph(Graph):
     # add a method to convert to XML for RESTlite represent method
@@ -22,9 +23,14 @@ class RespGraph(Graph):
  
 class Description (RESTfulResource):
     
-    def __init__(self, parentObject=None, resourceName=''):
-        RESTfulResource.__init__(self, parentObject, resourceName)
+    def __init__(self, parentObject=None, resourceDescriptor = {}):
+        RESTfulResource.__init__(self, parentObject, resourceDescriptor)
         self.graph = Graph()
+        
+        # see if graph was passed in on the resource constructor
+        if 'graph' in resourceDescriptor:
+            self.graph.parse( json.dumps(resourceDescriptor['graph']) ,'rdf-json' )
+                    
         self._parseContentTypes = [ 
                                    'application/json',
                                    'application/rdf+xml' , 
