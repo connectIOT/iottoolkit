@@ -50,14 +50,14 @@ if __name__ == '__main__' :
     weather = sensors.create({'resourceName': 'rhvWeather-01', 'resourceClass': 'SmartObject'}) 
                         
     # example description in simple link-format like concepts
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), RDFS.Class, Literal('SmartObject')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), RDF.type, Literal('SensorSystem')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), RDFS.Resource, Literal('Weather')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('resourceClass'), Literal('SmartObject')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('resourceType'), Literal('SensorSystem')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('sensorType'), Literal('Weather')))
     #
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), RDF.type, Literal('sensor')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), RDFS.Resource, Literal('temperature')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), RDF.type, Literal('sensor')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), RDFS.Resource, Literal('humidity')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), Literal('interfaceType'), Literal('sensor')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), Literal('resourceType'), Literal('temperature')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), Literal('interfaceType'), Literal('sensor')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), Literal('resourceType'), Literal('humidity')))
       
     
     # now create an Observable Property for each sensor output

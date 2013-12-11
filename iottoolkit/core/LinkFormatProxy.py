@@ -44,11 +44,11 @@ class LinkFormatProxy (RESTfulResource):
         self.fmt = { 'application/link-format': 'linkFormat' }
         
         # attribute - predicate bindings RDF - core-link-format
-        self._attrToPred = {'rt': RDFS.Resource,
-                            'if': RDF.type }
+        self._attrToPred = {'rt': Literal('resourceType'),
+                            'if': Literal('interfaceType') }
         
-        self._predToAttr = {RDFS.Resource: 'rt',
-                            RDF.type: 'if' }
+        self._predToAttr = {Literal('resourceType'): 'rt',
+                            Literal('interfaceType') : 'if' }
 
 
     def get(self, query=None):
