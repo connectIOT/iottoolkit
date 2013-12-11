@@ -26,11 +26,10 @@ class Description (RESTfulResource):
     def __init__(self, parentObject=None, resourceDescriptor = {}):
         RESTfulResource.__init__(self, parentObject, resourceDescriptor)
         self.graph = Graph()
-        
         # see if graph was passed in on the resource constructor
         if 'graph' in resourceDescriptor:
-            self.graph.parse( json.dumps(resourceDescriptor['graph']) ,'rdf-json' )
-                    
+            self.graph.parse( json.dumps(resourceDescriptor['graph']) ,format='rdf-json' )
+                                
         self._parseContentTypes = [ 
                                    'application/json',
                                    'application/rdf+xml' , 
@@ -73,7 +72,6 @@ class Description (RESTfulResource):
                     'text/plain' : 'xml' 
                     }
         
-
     # Description get method returns triples can be invoked via the 
     # property interface: SmartObject.Description  
     # Does the property decorator work for this?

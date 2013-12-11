@@ -37,7 +37,7 @@ class LinkFormatProxy (RESTfulResource):
     def __init__(self, parentObject=None, resourceName=''):
         RESTfulResource.__init__(self, parentObject, resourceName)
         # make a reference to the graph inside the associated Description resource
-        self.graph = self.resources['parentObject'].resources['parentObject'].Description.graph
+        self.graph = self.resources['parentObject'].resources['parentObject'].resources['Description'].graph
         # This resource supports link-format only
         self._parseContentTypes = [ 'application/link-format' ]
         self._serializeContentTypes = [ 'application/link-format' ]

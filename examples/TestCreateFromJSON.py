@@ -37,18 +37,13 @@ if __name__ == '__main__' :
     HttpObjectService(port=8001)
     
     # create the weather station resource template
+    
+    baseObject.Description = baseObject.create({'resourceName':'Description',\
+                                                'resourceClass': 'Description'})  
     # emulate the .well-known/core interface
     baseObject.create({'resourceName': '.well-known','resourceClass': 'SmartObject'},\
                         ).create({'resourceName': 'core','resourceClass': 'LinkFormatProxy'})
-      
-    # sensors resource under the baseObject for all sensors  
-    # top level object container for sensors, default class is SmartObject  
-    sensors = baseObject.create({'resourceName': 'sensors', 'resourceClass': 'SmartObject'}) 
-  
-    #weather resource under sensors for the weather sensor
-    # create a default class SmartObject for the weather sensor cluster 
-    weather = sensors.create({'resourceName': 'rhvWeather-01', 'resourceClass': 'SmartObject'}) 
-                        
+    
     # example description in simple link-format like concepts
     baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('resourceClass'), Literal('SmartObject')))
     baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('resourceType'), Literal('SensorSystem')))
@@ -59,12 +54,31 @@ if __name__ == '__main__' :
     baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), Literal('interfaceType'), Literal('sensor')))
     baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), Literal('resourceType'), Literal('humidity')))
       
+    # sensors resource under the baseObject for all sensors  
+    # top level object container for sensors, default class is SmartObject  
+    sensors = baseObject.create({'resourceName': 'sensors', 'resourceClass': 'SmartObject'}) 
+    
+    sensors.create({'resourceName':'Description',\
+                    'resourceClass': 'Description'})  
+  
+    #weather resource under sensors for the weather sensor
+    # create a default class SmartObject for the weather sensor cluster 
+    weather = sensors.create({'resourceName': 'rhvWeather-01', 'resourceClass': 'SmartObject'}) 
+    
+    weather.create({'resourceName':'Description',\
+                    'resourceClass': 'Description'})  
+
     
     # now create an Observable Property for each sensor output
-    pushInterval = 10 # number of samples to delay each push to Xively
 
     outdoor_temperature = weather.create({'resourceName': 'outdoor_temperature',\
                                           'resourceClass': 'ObservableProperty'})
+    
+    outdoor_temperature.create({'resourceName':'Description',\
+                                'resourceClass': 'Description'})
+    
+    outdoor_temperature.Observers = outdoor_temperature.create({'resourceName':'Observers',\
+                                                                'resourceClass': 'Observers'})
     
     outdoor_temperature.Observers.create({'resourceName': 'mqttTestObserver',\
                                         'resourceClass': 'mqttObserver',\
@@ -73,7 +87,13 @@ if __name__ == '__main__' :
      
     outdoor_humidity = weather.create({'resourceName': 'outdoor_humidity',\
                                         'resourceClass': 'ObservableProperty'})
-        
+    
+    outdoor_humidity.create({'resourceName':'Description',\
+                             'resourceClass': 'Description'})
+    
+    outdoor_humidity.Observers = outdoor_humidity.create({'resourceName':'Observers',\
+                                                          'resourceClass': 'Observers'})
+    
     outdoor_humidity.Observers.create({'resourceName': 'mqttTestObserver',\
                                         'resourceClass': 'mqttObserver',\
                                         'connection': 'smartobjectservice.com',\
