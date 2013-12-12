@@ -27,8 +27,8 @@ class Description (RESTfulResource):
         RESTfulResource.__init__(self, parentObject, resourceDescriptor)
         self.graph = Graph()
         # see if graph was passed in on the resource constructor
-        if 'graph' in resourceDescriptor:
-            self.graph.parse( json.dumps(resourceDescriptor['graph']) ,format='rdf-json' )
+        if 'graph' in resourceDescriptor and any(resourceDescriptor['graph']) :
+            self.graph.parse( data=json.dumps(resourceDescriptor['graph']) ,format='rdf-json' )
                                 
         self._parseContentTypes = [ 
                                    'application/json',
@@ -67,8 +67,9 @@ class Description (RESTfulResource):
                     'application/trix' : 'trix',
                     'application/n-quads' : 'nquads',
                     'text/trig' : 'trig',
-                    'application/json' : 'rdf-json',
+                    'application/rdf+json' : 'rdf-json',
                     'application/json+ld' : 'json-ld',
+                    'application/json' : 'rdf-json',
                     'text/plain' : 'xml' 
                     }
         
@@ -88,7 +89,7 @@ class Description (RESTfulResource):
         if type(newValue) is tuple :
             self.graph.set(newValue)
         else :
-            for triple in self.newValue.triples((None,None,None)):
+            for triple in newValue.triples((None,None,None)):
                 self.graph.add(triple)
     
     # add new triple or add new graph
@@ -108,7 +109,7 @@ class Description (RESTfulResource):
     # exposed methods for converting sub graphs 
     def parse(self,source, cType):
         g = Graph()
-        return g.parse(source,format=self.fmt[cType])
+        return g.parse(data=source,format=self.fmt[cType])
     
     def serialize(self,graph, cType): 
         return graph.serialize(format=self.fmt[cType])
