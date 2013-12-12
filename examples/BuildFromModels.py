@@ -35,6 +35,12 @@ rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'Rdf
 '''
 model format for populating Description and creating SmartObject instances and service instances
 '''
+service_metadata = {
+    'FQDN': '',
+    'IPV4': '',
+    'IPV6': ''
+    }
+#replace with service URIs etc. when starting service instances
 services = {
     'localHTTP' : {
         'scheme': 'http',
@@ -66,6 +72,10 @@ models = {
         },
     }
 """    
+model_metadata = {
+    'objectPath': '',
+    'mqttBroker': 'mqtt://localhost:1883'
+    }
 models = {
     '/': {
         'resourceName': '/',
@@ -118,6 +128,8 @@ callbackNotifierTemplate = {
 
 observerSchemes = ['http', 'coap', 'handler', ]
 
+observerTypes = ['subscribers', 'publishers', 'bridges']
+
 defaultResources = {
     'SmartObject': ['Description', 'Agent'],
     'ObservableProperty': ['Description', 'Observers']
@@ -131,17 +143,24 @@ def objectFromPath(self,path, baseObject):
         currentObject=object.resources[pathElement]
     return currentObject
 
-def createByScheme(self, currentResource, resourceDescriptor):
+def createObserver(self, currentResource, observerURI):
+    # split by scheme
+    # fill in template
+    #create resource        
     pass
 
 def graphFromModel(self, model):
+    # make rdf-json from the model and parse to RDF graph
     pass
 
 
 if __name__ == '__main__' :
-    # make models first
-    # make list sorted by path length for import from graph, 
-    # could count a split list but this should be the same if we eat slashes somewhere
+    
+    '''
+    make models 
+    make list sorted by path length for import from graph, 
+    could count a split list but this should be the same if we eat slashes somewhere
+    '''
     resourceList = sorted( models.keys(), key=str.count('/') )
     
     for resource in resourceList:
@@ -158,25 +177,30 @@ if __name__ == '__main__' :
                                         'resourceClass': defaultResource
                                         })
                     if defaultResource is 'Description': 
-                        newChildResource.set(graphFromModel(resourceDescriptor))
-                    
-                    
-            # set description and propagate back up to root
-            newResource.Description.create(resourceDescriptor)
-            # make observer instances and agent instances
-            createByScheme(newResource, resourceDescriptor)
+                        newChildResource.create(graphFromModel(resourceDescriptor))
+                        # FIXME need to aggregate graphs upstream
+            # make observers from the list of URIs of each Observer type
+            for resourceProperty in resourceDescriptor:
+                if resourceProperty in observerTypes:
+                    for observerURI in resourceDescriptor[resourceProperty]:
+                        createObserver(newResource, observerURI )
+    '''
+    make services
+    '''
+    for serviceName in services:
+        if services[serviceName]['scheme'] is 'http':
+            servicePort = services[serviceName]['port']
+            serviceRoot = services[serviceName]['root']
+            serviceRootObject = objectFromPath(serviceRoot)
+            httpServiceInstance = HttpObjectService(baseObject, port=servicePort)
             
-    
-    # make an empty instance of a SmartObject shared by 2 interfaces, 
-    # CoAP and HTTP, default object root and default ports 5683 and 8000
-    # CoAP service makes the base object and it is passed to the http service constructor
-    
-    baseObject = HttpObjectService( CoapObjectService().baseObject ).baseObject
-    
-    # emulate the .well-known/core interface
-    baseObject.create({'resourceName': '.well-known','resourceClass': 'SmartObject'},\
-                        ).create({'resourceName': 'core','resourceClass': 'LinkFormatProxy'})
-          
+        if services[serviceName]['scheme'] is 'coap':
+            servicePort = services[serviceName]['port']
+            serviceRoot = services[serviceName]['root']
+            serviceRootObject = objectFromPath(serviceRoot)
+            coapServiceInstance = CoapObjectService(baseObject, port=servicePort)
+                
+              
     try:
     # register handlers etc.
         while 1: sleep(1)
