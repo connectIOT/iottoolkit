@@ -1,0 +1,79 @@
+'''
+Created on Dec 12, 2013
+
+Create services from a service model instance, create objects from an object model instance 
+
+@author: mjkoster
+'''
+from interfaces.HttpObjectService import HttpObjectService
+from interfaces.CoapObjectService import CoapObjectService
+
+from core.SmartObject import SmartObject
+from core.Description import Description
+from core.ObservableProperty import ObservableProperty
+from core.Observers import Observers
+from core.PropertyOfInterest import PropertyOfInterest
+from rdflib.term import Literal, URIRef
+from rdflib.namespace import RDF, RDFS, XSD, OWL
+from interfaces.HttpObjectService import HttpObjectService
+from interfaces.CoapObjectService import CoapObjectService
+from time import sleep
+import sys
+
+
+#workaround to register rdf JSON plugins 
+import rdflib
+from rdflib.plugin import Serializer, Parser
+rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
+rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+rdflib.plugin.register('rdf-json', Serializer, 'rdflib_rdfjson.rdfjson_serializer', 'RdfJsonSerializer')
+rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonParser')
+
+
+if __name__ == '__main__' :
+    
+    services = {
+        'localHTTP' : {
+            'scheme': 'http',
+            'FQDN': 'localhost',
+            'port': '8000',
+            'IPV4': None,
+            'discovery': '/'
+                        },
+                
+        'localCoAP': {
+            'scheme': 'coap',
+            'FQDN': 'localhost',
+            'port': 5683 ,
+            'IPV4': None,
+            'discovery': '/' 
+                      }
+                }
+    
+    models = {
+        '/': {
+            'resourceName': '/',
+            'resourceClass': 'SmartObject'
+            },
+        '/sensors': {
+            'resourceName': 'sensors',
+            'resourceClass': 'SmartObject'
+            }
+        }
+    # make an empty instance of a SmartObject shared by 2 interfaces, 
+    # CoAP and HTTP, default object root and default ports 5683 and 8000
+    # CoAP service makes the base object and it is passed to the http service constructor
+    
+    baseObject = HttpObjectService( CoapObjectService().baseObject ).baseObject
+    
+    # emulate the .well-known/core interface
+    baseObject.create({'resourceName': '.well-known','resourceClass': 'SmartObject'},\
+                        ).create({'resourceName': 'core','resourceClass': 'LinkFormatProxy'})
+          
+    try:
+    # register handlers etc.
+        while 1: sleep(1)
+    except KeyboardInterrupt: pass
+    print 'got KeyboardInterrupt'
+
+    
