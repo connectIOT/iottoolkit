@@ -29,37 +29,37 @@ rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser'
 rdflib.plugin.register('rdf-json', Serializer, 'rdflib_rdfjson.rdfjson_serializer', 'RdfJsonSerializer')
 rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonParser')
 
+services = {
+    'localHTTP' : {
+        'scheme': 'http',
+        'FQDN': 'localhost',
+        'port': '8000',
+        'IPV4': None,
+        'discovery': '/'
+                    },
+                
+    'localCoAP': {
+        'scheme': 'coap',
+        'FQDN': 'localhost',
+        'port': 5683 ,
+        'IPV4': None,
+        'discovery': '/' 
+                    }
+             }
+    
+models = {
+    '/': {
+        'resourceName': '/',
+        'resourceClass': 'SmartObject'
+        },
+    '/sensors': {
+        'resourceName': 'sensors',
+        'resourceClass': 'SmartObject'
+        }
+    }
 
 if __name__ == '__main__' :
     
-    services = {
-        'localHTTP' : {
-            'scheme': 'http',
-            'FQDN': 'localhost',
-            'port': '8000',
-            'IPV4': None,
-            'discovery': '/'
-                        },
-                
-        'localCoAP': {
-            'scheme': 'coap',
-            'FQDN': 'localhost',
-            'port': 5683 ,
-            'IPV4': None,
-            'discovery': '/' 
-                      }
-                }
-    
-    models = {
-        '/': {
-            'resourceName': '/',
-            'resourceClass': 'SmartObject'
-            },
-        '/sensors': {
-            'resourceName': 'sensors',
-            'resourceClass': 'SmartObject'
-            }
-        }
     # make an empty instance of a SmartObject shared by 2 interfaces, 
     # CoAP and HTTP, default object root and default ports 5683 and 8000
     # CoAP service makes the base object and it is passed to the http service constructor
