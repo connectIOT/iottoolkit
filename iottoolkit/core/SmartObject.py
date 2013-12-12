@@ -35,9 +35,9 @@ class SmartObject(RESTfulResource):
             return self.resources['Description'].get()
         return None
     
-    def set(self, (s,p,o)): 
+    def set(self, (newValue)): 
         if 'Description' in self.resources :
-            self.resources['Description'].set((s,p,o))
+            self.resources['Description'].set(newValue)
             
     def create(self, resourceDescriptor):
         resourceName = resourceDescriptor['resourceName']
@@ -57,4 +57,13 @@ class SmartObject(RESTfulResource):
             return self.resources['Description'].serializeContentTypes()
         return None
         
+    def parse(self, graph, cType) : 
+        if 'Description' in self.resources :
+            return self.resources['Description'].parse(graph, cType)
+        return None
+    
+    def parseContentTypes(self) :
+        if 'Description' in self.resources :
+            return self.resources['Description'].parseContentTypes()
+        return None
         
