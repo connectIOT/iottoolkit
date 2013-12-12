@@ -37,24 +37,26 @@ class LinkFormatProxy (RESTfulResource):
     def __init__(self, parentObject=None, resourceName=''):
         RESTfulResource.__init__(self, parentObject, resourceName)
         # make a reference to the graph inside the associated Description resource
-        self.graph = self.resources['parentObject'].resources['parentObject'].Description.graph
+        # move to get and set methods to allow creation of this resource before Description
+        # self.graph = self.resources['parentObject'].resources['parentObject'].resources['Description'].graph
         # This resource supports link-format only
         self._parseContentTypes = [ 'application/link-format' ]
         self._serializeContentTypes = [ 'application/link-format' ]
         self.fmt = { 'application/link-format': 'linkFormat' }
         
         # attribute - predicate bindings RDF - core-link-format
-        self._attrToPred = {'rt': RDFS.Resource,
-                            'if': RDF.type }
+        self._attrToPred = {'rt': Literal('resourceType'),
+                            'if': Literal('interfaceType') }
         
-        self._predToAttr = {RDFS.Resource: 'rt',
-                            RDF.type: 'if' }
+        self._predToAttr = {Literal('resourceType'): 'rt',
+                            Literal('interfaceType') : 'if' }
 
 
     def get(self, query=None):
         # return a sub-graph consisting of the triples with predicates in the attribute binding
         # filtered by the query 
         g = Graph()        
+        self.graph = self.resources['parentObject'].resources['parentObject'].resources['Description'].graph
         if query == None:
             for self._pred in self._predToAttr:
                 for triple in self.graph.triples((None, self._pred, None)) :
@@ -70,6 +72,7 @@ class LinkFormatProxy (RESTfulResource):
     
     def set(self, newGraph):
         # update description graph with new subgraph
+        self.graph = self.resources['parentObject'].resources['parentObject'].resources['Description'].graph
         for self._triple in newGraph.triples((None,None,None)):
             self.graph.add(self._triple)
         

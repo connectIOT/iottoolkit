@@ -24,7 +24,7 @@ from rdflib.plugin import Serializer, Parser
 rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
 rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
 rdflib.plugin.register('rdf-json', Serializer, 'rdflib_rdfjson.rdfjson_serializer', 'RdfJsonSerializer')
-rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonSerializer')
+rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonParser')
 
 
 if __name__ == '__main__' :
@@ -37,34 +37,48 @@ if __name__ == '__main__' :
     HttpObjectService(port=8001)
     
     # create the weather station resource template
+    
+    baseObject.Description = baseObject.create({'resourceName':'Description',\
+                                                'resourceClass': 'Description'})  
     # emulate the .well-known/core interface
     baseObject.create({'resourceName': '.well-known','resourceClass': 'SmartObject'},\
                         ).create({'resourceName': 'core','resourceClass': 'LinkFormatProxy'})
+    
+    # example description in simple link-format like concepts
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('resourceClass'), Literal('SmartObject')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('resourceType'), Literal('SensorSystem')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), Literal('sensorType'), Literal('Weather')))
+    #
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), Literal('interfaceType'), Literal('sensor')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), Literal('resourceType'), Literal('temperature')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), Literal('interfaceType'), Literal('sensor')))
+    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), Literal('resourceType'), Literal('humidity')))
       
     # sensors resource under the baseObject for all sensors  
     # top level object container for sensors, default class is SmartObject  
     sensors = baseObject.create({'resourceName': 'sensors', 'resourceClass': 'SmartObject'}) 
+    
+    sensors.create({'resourceName':'Description',\
+                    'resourceClass': 'Description'})  
   
     #weather resource under sensors for the weather sensor
     # create a default class SmartObject for the weather sensor cluster 
     weather = sensors.create({'resourceName': 'rhvWeather-01', 'resourceClass': 'SmartObject'}) 
-                        
-    # example description in simple link-format like concepts
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), RDFS.Class, Literal('SmartObject')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), RDF.type, Literal('SensorSystem')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01'), RDFS.Resource, Literal('Weather')))
-    #
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), RDF.type, Literal('sensor')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_temperature'), RDFS.Resource, Literal('temperature')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), RDF.type, Literal('sensor')))
-    baseObject.Description.set((URIRef('sensors/rhvWeather-01/outdoor_humidity'), RDFS.Resource, Literal('humidity')))
-      
+    
+    weather.create({'resourceName':'Description',\
+                    'resourceClass': 'Description'})  
+
     
     # now create an Observable Property for each sensor output
-    pushInterval = 10 # number of samples to delay each push to Xively
 
     outdoor_temperature = weather.create({'resourceName': 'outdoor_temperature',\
                                           'resourceClass': 'ObservableProperty'})
+    
+    outdoor_temperature.create({'resourceName':'Description',\
+                                'resourceClass': 'Description'})
+    
+    outdoor_temperature.Observers = outdoor_temperature.create({'resourceName':'Observers',\
+                                                                'resourceClass': 'Observers'})
     
     outdoor_temperature.Observers.create({'resourceName': 'mqttTestObserver',\
                                         'resourceClass': 'mqttObserver',\
@@ -73,7 +87,13 @@ if __name__ == '__main__' :
      
     outdoor_humidity = weather.create({'resourceName': 'outdoor_humidity',\
                                         'resourceClass': 'ObservableProperty'})
-        
+    
+    outdoor_humidity.create({'resourceName':'Description',\
+                             'resourceClass': 'Description'})
+    
+    outdoor_humidity.Observers = outdoor_humidity.create({'resourceName':'Observers',\
+                                                          'resourceClass': 'Observers'})
+    
     outdoor_humidity.Observers.create({'resourceName': 'mqttTestObserver',\
                                         'resourceClass': 'mqttObserver',\
                                         'connection': 'smartobjectservice.com',\

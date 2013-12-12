@@ -11,6 +11,7 @@ work on the sub-graphs used by get and set methods for discovery and linkage
 from RESTfulResource import RESTfulResource
 from rdflib.graph import Graph
 from Observers import Observers
+import json
 
 class RespGraph(Graph):
     # add a method to convert to XML for RESTlite represent method
@@ -22,9 +23,13 @@ class RespGraph(Graph):
  
 class Description (RESTfulResource):
     
-    def __init__(self, parentObject=None, resourceName=''):
-        RESTfulResource.__init__(self, parentObject, resourceName)
+    def __init__(self, parentObject=None, resourceDescriptor = {}):
+        RESTfulResource.__init__(self, parentObject, resourceDescriptor)
         self.graph = Graph()
+        # see if graph was passed in on the resource constructor
+        if 'graph' in resourceDescriptor and any(resourceDescriptor['graph']) :
+            self.graph.parse( data=json.dumps(resourceDescriptor['graph']) ,format='rdf-json' )
+                                
         self._parseContentTypes = [ 
                                    'application/json',
                                    'application/rdf+xml' , 
@@ -62,12 +67,12 @@ class Description (RESTfulResource):
                     'application/trix' : 'trix',
                     'application/n-quads' : 'nquads',
                     'text/trig' : 'trig',
-                    'application/json' : 'rdf-json',
+                    'application/rdf+json' : 'rdf-json',
                     'application/json+ld' : 'json-ld',
+                    'application/json' : 'rdf-json',
                     'text/plain' : 'xml' 
                     }
         
-
     # Description get method returns triples can be invoked via the 
     # property interface: SmartObject.Description  
     # Does the property decorator work for this?
@@ -84,7 +89,7 @@ class Description (RESTfulResource):
         if type(newValue) is tuple :
             self.graph.set(newValue)
         else :
-            for triple in self.newValue.triples((None,None,None)):
+            for triple in newValue.triples((None,None,None)):
                 self.graph.add(triple)
     
     # add new triple or add new graph
@@ -104,7 +109,7 @@ class Description (RESTfulResource):
     # exposed methods for converting sub graphs 
     def parse(self,source, cType):
         g = Graph()
-        return g.parse(source,format=self.fmt[cType])
+        return g.parse(data=source,format=self.fmt[cType])
     
     def serialize(self,graph, cType): 
         return graph.serialize(format=self.fmt[cType])
