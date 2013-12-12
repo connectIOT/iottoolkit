@@ -33,16 +33,18 @@ services = {
     'localHTTP' : {
         'scheme': 'http',
         'FQDN': 'localhost',
-        'port': '8000',
-        'IPV4': None,
+        'port': 8000,
+        'IPV4': '',
+        'root': '/',
         'discovery': '/'
                     },
                 
     'localCoAP': {
         'scheme': 'coap',
         'FQDN': 'localhost',
-        'port': 5683 ,
-        'IPV4': None,
+        'port': 5683,
+        'IPV4': '',
+        'root': '/',
         'discovery': '/' 
                     }
              }
@@ -55,10 +57,42 @@ models = {
     '/sensors': {
         'resourceName': 'sensors',
         'resourceClass': 'SmartObject'
+        },
+    '/sensors/rhvWeather-01': {
+        'resourceName': 'rhvWeather-01',
+        'resourceClass': 'SmartObject'
+        },
+    '/sensors/rhvWeather-01/indoor_temperature': {
+        'resourceName': 'indoor_temperature',
+        'resourceClass': 'SmartObject',
+        'resourceType': 'temperature',
+        'interfaceType':'sensor',
+        'subscribeURI': 'mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/indoor_temperature',
+        'publishURI': '',
+        'bridgeURI': ''
         }
     }
 
+def objectFromPath(self,path, scope=None):
+    if scope=='parent':
+        pass
+        
+    return
+
 if __name__ == '__main__' :
+    
+    # make models first
+    baseObject = None
+    # make list and sort by path length for import from graph
+    resourceList = models
+    
+    for resource in resourceList:
+        resourceDescriptor = resourceList[resource]
+        if resource is '/' and resourceDescriptor['resourceClass'] is 'SmartObject' and baseObject is None:
+            baseObject = SmartObject()
+        else:
+            resourceConstructor = resourceDescriptor
+            objectFromPath(resource, scope ='parent').create(resourceConstructor)
     
     # make an empty instance of a SmartObject shared by 2 interfaces, 
     # CoAP and HTTP, default object root and default ports 5683 and 8000
