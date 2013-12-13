@@ -11,13 +11,13 @@ There could be a service creation service where POSTing this descriptor would
 from interfaces.HttpObjectService import HttpObjectService
 from interfaces.CoapObjectService import CoapObjectService
 
+from core.RESTfulResource import RESTfulResource
 from core.SmartObject import SmartObject
 from core.Description import Description
 from core.ObservableProperty import ObservableProperty
 from core.Observers import Observers
 from core.PropertyOfInterest import PropertyOfInterest
 from rdflib.term import Literal, URIRef
-from rdflib.namespace import RDF, RDFS, XSD, OWL
 from interfaces.HttpObjectService import HttpObjectService
 from interfaces.CoapObjectService import CoapObjectService
 from time import sleep
@@ -40,7 +40,7 @@ service_metadata = {
     'IPV4': '',
     'IPV6': ''
     }
-#replace with service URIs etc. when starting service instances
+#replace with unique service URIs e.g. http://localhost:8000  when starting service instances
 services = {
     'localHTTP' : {
         'scheme': 'http',
@@ -71,14 +71,20 @@ models = {
         'resourceClass': 'SmartObject'
         },
     }
-"""    
+"""   
+ 
 model_metadata = {
     'objectPath': '',
-    'mqttBroker': 'mqtt://localhost:1883'
+    'mqtt_timeout': 120
     }
+
 models = {
     '/': {
         'resourceName': '/',
+        'resourceClass': 'SmartObject'
+        },
+    '/services': {
+        'resourceName': 'services',
         'resourceClass': 'SmartObject'
         },
     '/sensors': {
@@ -126,14 +132,6 @@ callbackNotifierTemplate = {
     'handlerURI': 'localhost'
     }
 
-observerSchemes = ['http', 'coap', 'handler', ]
-
-observerTypes = ['subscribers', 'publishers', 'bridges']
-
-defaultResources = {
-    'SmartObject': ['Description', 'Agent'],
-    'ObservableProperty': ['Description', 'Observers']
-    }
 
 baseObject = None
 
@@ -143,7 +141,7 @@ def objectFromPath(self,path, baseObject):
         currentObject=object.resources[pathElement]
     return currentObject
 
-def createObserver(self, currentResource, observerURI):
+def observerFromURI(self, currentResource, observerURI):
     # split by scheme
     # fill in template
     #create resource        
@@ -153,54 +151,110 @@ def graphFromModel(self, model):
     # make rdf-json from the model and parse to RDF graph
     pass
 
+class mqttService(object):
+    # start up an instance of mosquitto at the specified port and register it
+    pass
 
-if __name__ == '__main__' :
+class ServiceObject(RESTfulResource):
+    def __init__(self, resourceDescriptor):
+        RESTfulResource.__init__(self)
     
-    '''
-    make models 
-    make list sorted by path length for import from graph, 
-    could count a split list but this should be the same if we eat slashes somewhere
-    '''
-    resourceList = sorted( models.keys(), key=str.count('/') )
-    
-    for resource in resourceList:
-        resourceDescriptor = models[resource]
-        # see if base object needs to be created. 
-        if resource is '/' and resourceDescriptor['resourceClass'] is 'SmartObject' and baseObject is None:
-            baseObject = SmartObject()
-        else:
-            newResource = objectFromPath(resource).create(resourceDescriptor)
-            if resourceDescriptor['resourceClass'] in defaultResources:
-                for defaultResource in defaultResources[resource]:
-                    newChildResource = newResource.create({
-                                        'resourceName': defaultResource,
-                                        'resourceClass': defaultResource
-                                        })
-                    if defaultResource is 'Description': 
-                        newChildResource.create(graphFromModel(resourceDescriptor))
-                        # FIXME need to aggregate graphs upstream
-            # make observers from the list of URIs of each Observer type
-            for resourceProperty in resourceDescriptor:
-                if resourceProperty in observerTypes:
-                    for observerURI in resourceDescriptor[resourceProperty]:
-                        createObserver(newResource, observerURI )
-    '''
-    make services
-    '''
-    for serviceName in services:
-        if services[serviceName]['scheme'] is 'http':
-            servicePort = services[serviceName]['port']
-            serviceRoot = services[serviceName]['root']
-            serviceRootObject = objectFromPath(serviceRoot)
-            httpServiceInstance = HttpObjectService(baseObject, port=servicePort)
+"""        
+    if services[serviceName]['scheme'] is 'http':
+        servicePort = services[serviceName]['port']
+        serviceRoot = services[serviceName]['root']
+        serviceRootObject = objectFromPath(serviceRoot)
+        httpServiceInstance = HttpObjectService(serviceRootObject, port=servicePort)
             
         if services[serviceName]['scheme'] is 'coap':
             servicePort = services[serviceName]['port']
             serviceRoot = services[serviceName]['root']
             serviceRootObject = objectFromPath(serviceRoot)
-            coapServiceInstance = CoapObjectService(baseObject, port=servicePort)
+            coapServiceInstance = CoapObjectService(serviceRootObject, port=servicePort)
                 
-              
+        if services[serviceName]['scheme'] is 'mqtt':
+            servicePort = services[serviceName]['port']
+            mqttServiceInstance = mqttService(port=servicePort)
+"""
+
+class systemInstance(object):
+    '''
+    creates service instances and object instances from dictionary constructors
+    {
+    'service_metadata': {},
+    'services': {},
+    'object_metadata': {},
+    'objects': {}
+    }
+    '''
+    def __init__(self, systemConstructor):
+        
+        self._service_metadata = systemConstructor['service_metadata']
+        self._services = systemConstructor['services']
+        self._model_metadata = systemConstructor['model_metadata']
+        self._models = systemConstructor['models']
+        
+        self._baseObject = None
+        
+        self._defaultResources = {
+                                  'SmartObject': ['Description', 'Agent'],
+                                  'ObservableProperty': ['Description', 'Observers']
+                                  }
+
+        self._observerTypes = ['subscribers', 'publishers', 'bridges']
+        
+        self._observerSchemes = ['http', 'coap', 'handler', ]
+
+        '''
+        make models first
+        make list sorted by path length for import from graph, 
+        could count a split list but this should be the same if we eat slashes somewhere
+        '''
+        self._resourceList = sorted( self._models.keys(), key=str.count('/') )
+        for resource in self._resourceList:
+            resourceDescriptor = self._models[resource]
+            # see if base object needs to be created. 
+            if resource is '/' and resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
+                self._baseObject = SmartObject()
+            else:
+                newResource = objectFromPath(resource).create(resourceDescriptor)
+                if resourceDescriptor['resourceClass'] in self._defaultResources:
+                    for defaultResource in self._defaultResources[resource]:
+                        newChildResource = newResource.create({
+                                        'resourceName': defaultResource,
+                                        'resourceClass': defaultResource
+                                        })
+                        if defaultResource is 'Description': 
+                            newChildResource.create(graphFromModel(resourceDescriptor))
+                        # FIXME need to aggregate graphs upstream
+                        # make observers from the list of URIs of each Observer type
+            for resourceProperty in resourceDescriptor:
+                if resourceProperty in self._observerTypes:
+                    for observerURI in resourceDescriptor[resourceProperty]:
+                        observerFromURI(newResource, observerURI )
+        '''
+        make services
+        '''
+        # make this a service Object (RESTfulResource) with dict as constructor
+        self._serviceRegistry = objectFromPath('/services', self._baseObject)
+        serviceDescription = objectFromPath('/services/Description', self._baseObject)        
+    
+        for serviceName in self._services:
+            newService = ServiceObject(self._services[serviceName])
+            self._serviceRegistry.resources.update( {newService.Properties['resourceName']: newService} )
+            serviceDescription.create()
+
+
+if __name__ == '__main__' :
+    
+    '''
+    make an instance using the example constructors
+    '''
+    system = systemInstance({'service_metadata': service_metadata,
+                             'services': services,
+                             'model_metadata': model_metadata,
+                             'models': models
+                             })          
     try:
     # register handlers etc.
         while 1: sleep(1)
