@@ -215,19 +215,20 @@ class systemInstance(object):
             resourceDescriptor = self._models[resource]
             # see if base object needs to be created. 
             if resource is '/' and resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
-                self._baseObject = SmartObject()
+                self._baseObject = SmartObject(resourceDescriptor)
             else:
                 newResource = objectFromPath(resource).create(resourceDescriptor)
-                if resourceDescriptor['resourceClass'] in self._defaultResources:
-                    for defaultResource in self._defaultResources[resource]:
-                        newChildResource = newResource.create({
+                
+            if resourceDescriptor['resourceClass'] in self._defaultResources:
+                for defaultResource in self._defaultResources[resource]:
+                    newChildResource = newResource.create({
                                         'resourceName': defaultResource,
                                         'resourceClass': defaultResource
                                         })
-                        if defaultResource is 'Description': 
-                            newChildResource.create(graphFromModel(resourceDescriptor))
-                        # FIXME need to aggregate graphs upstream
-                        # make observers from the list of URIs of each Observer type
+                    if defaultResource is 'Description': 
+                        newChildResource.create(graphFromModel(resourceDescriptor))
+                    # FIXME need to aggregate graphs upstream
+                    # make observers from the list of URIs of each Observer type
             for resourceProperty in resourceDescriptor:
                 if resourceProperty in self._observerTypes:
                     for observerURI in resourceDescriptor[resourceProperty]:
@@ -254,7 +255,8 @@ if __name__ == '__main__' :
                              'services': services,
                              'model_metadata': model_metadata,
                              'models': models
-                             })          
+                             })
+              
     try:
     # register handlers etc.
         while 1: sleep(1)
