@@ -19,7 +19,9 @@ import json
 
 class ResourceList(object):
     def __init__(self, listObject):
+        #FIXME LinkFormatProxy isn't a container but want to avoid using GET to make constructor
         self._containerClasses = ['SmartObject', 'Observers', 'Agent', 'LinkFormatProxy' , 'ObservableProperty' ]
+        self._linkResources = ['l', 'Properties', 'Resources', 'thisObject', 'baseObject', 'parentObject' ]
         self._object = listObject
         self.resources = {}
         
@@ -40,7 +42,7 @@ class ResourceList(object):
         resources = object.resources
         resourceList=[]
         for resource in resources: #only list child objects
-            if resource not in ('l', 'Properties', 'thisObject', 'baseObject', 'parentObject' ):
+            if resource not in self._linkResources:
                 childObject=resources[resource]
                 resourceName = childObject.Properties.get('resourceName')
                 resourceClass = childObject.Properties.get('resourceClass')
@@ -55,7 +57,6 @@ class ResourceList(object):
                         graph = json.loads( childObject.serialize(childObject.get(),'application/json') )
                         resourceConstructor.update({'graph' : graph })
                     else:
-                        # FIXME get returns settings except for PropertyOfInterest: add a settings endpoint/object
                         resourceConstructor.update(childObject.get())
                     resourceList.append([resourceConstructor])
         return resourceList
@@ -74,7 +75,7 @@ class ResourceList(object):
    
 class RESTfulDictEndpoint(object): # create a resource endpoint from a property reference
     def __init__(self, dictReference):
-        self.resources = {}
+        self.resources = {} # the recursive router likes to see an empty link dictionary to indicate endpoint
         self._resource = dictReference # this only happens on init of the RESTfulEndpoint
     #try the Property interface to expose the dictionary with getter and setter properties
     @property
@@ -85,25 +86,29 @@ class RESTfulDictEndpoint(object): # create a resource endpoint from a property 
         self._resource.update(dictUpdate)
 
     def get(self, key=None):
+        # FIXME derive key from query
         if key == None:
             return self._resource
         else:
             return self._resource[key]
     
     def getList(self, key=None):
+        # FIXME derive key from query
         if key == None:
             return self._resource.keys()
         else:
             return self._resource[key]
         
     def set(self,dictUpdate):
+        # set maps to update
         self._resource.update(dictUpdate)
         return
 
     def update(self,dictUpdate):
         self._resource.update(dictUpdate)
+        # could add hook here for dict update side effect
         return
-    
+        
     #try the decsriptor interface to allow use of the attribute as a reference
     def __get__(self, instance, owner=None):
         return self._resource

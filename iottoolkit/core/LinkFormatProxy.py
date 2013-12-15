@@ -8,6 +8,9 @@ based on bindings of Link-Format attributes to RDF Predicates
 This is meant to expose an object at .well-known/core in the object hierarchy where
 .well-known is a nested smart object and core is an instance of this proxy
 
+It may be better to use the CoAP router to route .well_known/core to the Description and have the
+Description provide core-link-format mimetype
+
 The CoAP server maps POST to the set operation and PUT to the create operation
 The HTTP server maps PUT to the set operation and POST to the create operation
 
