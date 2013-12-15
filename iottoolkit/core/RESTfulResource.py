@@ -21,7 +21,7 @@ class ResourceList(object):
     def __init__(self, listObject):
         #FIXME LinkFormatProxy isn't a container but want to avoid using GET to make constructor
         self._containerClasses = ['SmartObject', 'Observers', 'Agent', 'LinkFormatProxy' , 'ObservableProperty' ]
-        self._linkResources = ['l', 'Properties', 'Resources', 'thisObject', 'baseObject', 'parentObject' ]
+        self._derivedResources = ['l', 'Properties', 'Resources', 'thisObject', 'baseObject', 'parentObject' ]
         self._object = listObject
         self.resources = {}
         
@@ -42,7 +42,7 @@ class ResourceList(object):
         resources = object.resources
         resourceList=[]
         for resource in resources: #only list child objects
-            if resource not in self._linkResources:
+            if resource not in self._derivedResources:
                 childObject=resources[resource]
                 resourceName = childObject.Properties.get('resourceName')
                 resourceClass = childObject.Properties.get('resourceClass')
