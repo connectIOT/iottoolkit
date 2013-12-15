@@ -17,7 +17,6 @@ to content types
 
 @author: mjkoster
 '''
-from Resource import Resource
 import json
 
 class ResourceList(object):
@@ -116,10 +115,11 @@ class RESTfulDictEndpoint(object): # create a resource endpoint from a property 
         return
     
 
-class RESTfulResource(Resource) :    
+class RESTfulResource(object) :    
     # when this resource is created
     def __init__(self, parentObject=None, resourceDescriptor = {}):
-        Resource.__init__(self)
+        self.resources = {} # the visible directory of resource names 
+        self.value = []
         # The resources dictionary is for subclasses of RESTfulResource, routable as http endpoints
         # The Properties dictionary is for serializable objects and strings, get/put but not routable
         self.Resources = RESTfulDictEndpoint(self.resources) #make resources endpoint from the dictionary
@@ -153,6 +153,22 @@ class RESTfulResource(Resource) :
         
         self.resources.update({'l': ResourceList(self)})
         
+    # return the default contents of this resource
+    def get(self) :
+        return self._get() 
+    
+    def _get(self) :
+        return self.value 
+    
+    # update the default contents of this resource
+    def set(self, newValue) :
+        self._set(newValue)
+        return
+
+    def _set(self, newValue) :
+        self.value=newValue
+        return
+        
     # new create takes dictionary built from JSON object POSTed to parent resource
     def create(self, resourceDescriptor):
         resourceName = resourceDescriptor['resourceName']
@@ -162,6 +178,10 @@ class RESTfulResource(Resource) :
             self.resources.update({resourceName : globals()[resourceClass](self, resourceDescriptor)}) 
         return self.resources[resourceName] # returns a reference to the created instance
                         
+    # for removing resources inside this resource
+    def delete(self, resourceName) :
+        del self.resources[resourceName] # remove dict entry FIXME remove reference to instance
+        return
      
 """ Default representation is JSON, XML also supported
     Add parse and serialize for RDF graph, etc. for richer 
