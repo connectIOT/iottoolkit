@@ -73,12 +73,12 @@ models = {
     }
 """   
  
-model_metadata = {
+object_metadata = {
     'objectPath': '',
     'mqtt_timeout': 120
     }
 
-models = {
+objects = {
     '/': {
         'resourceName': '/',
         'resourceClass': 'SmartObject'
@@ -177,7 +177,7 @@ class ServiceObject(RESTfulResource):
             mqttServiceInstance = mqttService(port=servicePort)
 """
 
-class systemInstance(object):
+class SystemInstance(object):
     '''
     creates service instances and object instances from dictionary constructors
     {
@@ -191,8 +191,8 @@ class systemInstance(object):
         
         self._service_metadata = systemConstructor['service_metadata']
         self._services = systemConstructor['services']
-        self._model_metadata = systemConstructor['model_metadata']
-        self._models = systemConstructor['models']
+        self._object_metadata = systemConstructor['object_metadata']
+        self._objects = systemConstructor['objects']
         
         self._baseObject = None
         
@@ -206,13 +206,13 @@ class systemInstance(object):
         self._observerSchemes = ['http', 'coap', 'handler', ]
 
         '''
-        make models first
+        make objects from object models first
         make list sorted by path length for import from graph, 
         could count a split list but this should be the same if we eat slashes somewhere
         '''
-        self._resourceList = sorted( self._models.keys(), key=str.count('/') )
+        self._resourceList = sorted( self._objects.keys(), key=str.count('/') )
         for resource in self._resourceList:
-            resourceDescriptor = self._models[resource]
+            resourceDescriptor = self._objects[resource]
             # see if base object needs to be created. 
             if resource is '/' and resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
                 self._baseObject = SmartObject(resourceDescriptor)
@@ -251,10 +251,10 @@ if __name__ == '__main__' :
     '''
     make an instance using the example constructors
     '''
-    system = systemInstance({'service_metadata': service_metadata,
+    system = SystemInstance({'service_metadata': service_metadata,
                              'services': services,
-                             'model_metadata': model_metadata,
-                             'models': models
+                             'object_metadata': object_metadata,
+                             'objects': objects
                              })
               
     try:
