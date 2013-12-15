@@ -3,8 +3,6 @@ Created on Sep 29, 2012
 
 Base Class for RESTfulResources in SmartObject
 
-Extends the Resource class
-
 This class will be extended by Description, Observers,
 ObservableProperty, PropertyOfInterest, and Agent resource classes
 
@@ -180,8 +178,33 @@ class RESTfulResource(object) :
                         
     # for removing resources inside this resource
     def delete(self, resourceName) :
+        # notify the resource that it's being deleted
+        self.resources[resourceName].cleanupRecursive()
+        #
+        # force dereference the object
+        #
+        # unlinks the resource 
         del self.resources[resourceName] # remove dict entry FIXME remove reference to instance
         return
+     
+    def cleanupRecursive(self):
+        # clean up, dereference, and unlink all child resources recursively
+        #
+        self._cleanup() # terminate threads and release resources
+        #
+        # recursively clean up, dereference, and unlink
+        for resource in self.resources:
+            #
+            self.resources[resource].cleanupRecursive()
+            #
+            # force dereference the object
+            #
+            # unlink the resource
+            del self.resources[resource]
+    
+    def _cleanup(self):
+        # override this in derived classes to terminate threads and release resources
+        pass
      
 """ Default representation is JSON, XML also supported
     Add parse and serialize for RDF graph, etc. for richer 
