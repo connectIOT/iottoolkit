@@ -65,7 +65,7 @@ services = {
 Minimal server needs one base object 
 Starting a server will create one but this provides a discoverable model and container
 
-models = {
+objects = {
     '/': {
         'resourceName': '/',
         'resourceClass': 'SmartObject'
