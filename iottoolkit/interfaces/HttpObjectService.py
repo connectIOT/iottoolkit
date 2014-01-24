@@ -74,7 +74,7 @@ class RestObject(restObject.RestObject):
             else :
                 raise restlite.Status('415 Unsupported Media Type')
         else :
-            restObject.RestObject._handlePUT(self, currentResource) # default PUT
+            restObject.RestObject._handlePOST(self, currentResource) # default PUT
                 
     def _handleDELETE(self, currentResource):
         if hasattr(currentResource, 'parse') :
