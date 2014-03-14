@@ -84,7 +84,7 @@ if __name__ == '__main__' :
                                         'resourceClass': 'mqttObserver',\
                                         'connection': 'smartobjectservice.com',\
                                         'pubTopic': ''})
-     
+    
     outdoor_humidity = weather.create({'resourceName': 'outdoor_humidity',\
                                         'resourceClass': 'ObservableProperty'})
     
