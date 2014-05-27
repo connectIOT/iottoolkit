@@ -34,11 +34,7 @@ class SmartObject(RESTfulResource):
         if 'Description' in self.resources :
             return self.resources['Description'].get()
         return None
-    
-    def set(self, (s,p,o)): 
-        if 'Description' in self.resources :
-            self.resources['Description'].set((s,p,o))
-            
+                
     def create(self, resourceDescriptor):
         resourceName = resourceDescriptor['resourceName']
         resourceClass = resourceDescriptor['resourceClass']
@@ -46,7 +42,8 @@ class SmartObject(RESTfulResource):
             # create new instance of the named class and add to resources directory, return the ref
             self.resources.update({resourceName : globals()[resourceClass](self, resourceDescriptor)}) 
         return self.resources[resourceName] # returns a reference to the created instance
-
+    
+    # reflect the Description back from the SmartObject for discovery endpoint
     def serialize(self, graph, cType) : 
         if 'Description' in self.resources :
             return self.resources['Description'].serialize(graph, cType)
@@ -56,5 +53,3 @@ class SmartObject(RESTfulResource):
         if 'Description' in self.resources :
             return self.resources['Description'].serializeContentTypes()
         return None
-        
-        

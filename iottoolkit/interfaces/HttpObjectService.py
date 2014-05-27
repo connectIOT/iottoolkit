@@ -60,25 +60,30 @@ class RestObject(restObject.RestObject):
     
     def _handlePUT(self, currentResource):
         if hasattr(currentResource, 'parse') :
-            responseType = self.contentTypeNegotiate(self.env['HTTP_ACCEPT'], currentResource.parseContentTypes() )
-            currentResource.set( currentResource.parse( self.request.getBody() , responseType ))
+            if self.env['CONTENT_TYPE'] in currentResource.parseContentTypes() :
+                currentResource.set( currentResource.parse( self.request.getBody() , self.env['CONTENT_TYPE'] ))
+            else :
+                raise restlite.Status('415 Unsupported Media Type')
         else :
             restObject.RestObject._handlePUT(self, currentResource) # default PUT
     
     def _handlePOST(self, currentResource):
         if hasattr(currentResource, 'parse') :
-            responseType = self.contentTypeNegotiate(self.env['HTTP_ACCEPT'], currentResource.parseContentTypes() )
-            currentResource.create( currentResource.parse( self.request.getBody() , responseType ))
+            if self.env['CONTENT_TYPE'] in currentResource.parseContentTypes() :
+                currentResource.create( currentResource.parse( self.request.getBody() , self.env['CONTENT_TYPE'] ))
+            else :
+                raise restlite.Status('415 Unsupported Media Type')
         else :
-            restObject.RestObject._handlePOST(self, currentResource) # default POST
-    
+            restObject.RestObject._handlePOST(self, currentResource) # default PUT
+                
     def _handleDELETE(self, currentResource):
         if hasattr(currentResource, 'parse') :
-            responseType = self.contentTypeNegotiate(self.env['HTTP_ACCEPT'], currentResource.parseContentTypes() )
-            currentResource.delete( currentResource.parse( self.request.getBody() , responseType ))
+            if self.env['CONTENT_TYPE'] in currentResource.parseContentTypes() :
+                currentResource.delete( currentResource.parse( self.request.getBody() , self.env['CONTENT_TYPE'] ))
+            else :
+                raise restlite.Status('415 Unsupported Media Type')
         else :
-            restObject.RestObject._handleDELETE(self, currentResource) # default DELETE
-
+            restObject.RestObject._handlePUT(self, currentResource) # default PUT
 
 def bind(rootObject, users=None):
     '''The bind method to bind the returned wsgi application to the supplied data and users.

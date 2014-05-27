@@ -3,8 +3,6 @@ Created on Sep 29, 2012
 
 Base Class for RESTfulResources in SmartObject
 
-Extends the Resource class
-
 This class will be extended by Description, Observers,
 ObservableProperty, PropertyOfInterest, and Agent resource classes
 
@@ -17,12 +15,13 @@ to content types
 
 @author: mjkoster
 '''
-from Resource import Resource
 import json
 
 class ResourceList(object):
     def __init__(self, listObject):
+        #FIXME LinkFormatProxy isn't a container but want to avoid using GET to make constructor
         self._containerClasses = ['SmartObject', 'Observers', 'Agent', 'LinkFormatProxy' , 'ObservableProperty' ]
+        self._derivedResources = ['l', 'Properties', 'Resources', 'thisObject', 'baseObject', 'parentObject' ]
         self._object = listObject
         self.resources = {}
         
@@ -43,7 +42,7 @@ class ResourceList(object):
         resources = object.resources
         resourceList=[]
         for resource in resources: #only list child objects
-            if resource not in ('l', 'Properties', 'thisObject', 'baseObject', 'parentObject' ):
+            if resource not in self._derivedResources:
                 childObject=resources[resource]
                 resourceName = childObject.Properties.get('resourceName')
                 resourceClass = childObject.Properties.get('resourceClass')
@@ -58,7 +57,6 @@ class ResourceList(object):
                         graph = json.loads( childObject.serialize(childObject.get(),'application/json') )
                         resourceConstructor.update({'graph' : graph })
                     else:
-                        # FIXME get returns settings except for PropertyOfInterest: add a settings endpoint/object
                         resourceConstructor.update(childObject.get())
                     resourceList.append([resourceConstructor])
         return resourceList
@@ -77,7 +75,7 @@ class ResourceList(object):
    
 class RESTfulDictEndpoint(object): # create a resource endpoint from a property reference
     def __init__(self, dictReference):
-        self.resources = {}
+        self.resources = {} # the recursive router likes to see an empty link dictionary to indicate endpoint
         self._resource = dictReference # this only happens on init of the RESTfulEndpoint
     #try the Property interface to expose the dictionary with getter and setter properties
     @property
@@ -88,25 +86,29 @@ class RESTfulDictEndpoint(object): # create a resource endpoint from a property 
         self._resource.update(dictUpdate)
 
     def get(self, key=None):
+        # FIXME derive key from query
         if key == None:
             return self._resource
         else:
             return self._resource[key]
     
     def getList(self, key=None):
+        # FIXME derive key from query
         if key == None:
             return self._resource.keys()
         else:
             return self._resource[key]
         
     def set(self,dictUpdate):
+        # set maps to update
         self._resource.update(dictUpdate)
         return
 
     def update(self,dictUpdate):
         self._resource.update(dictUpdate)
+        # could add hook here for dict update side effect
         return
-    
+        
     #try the decsriptor interface to allow use of the attribute as a reference
     def __get__(self, instance, owner=None):
         return self._resource
@@ -116,10 +118,11 @@ class RESTfulDictEndpoint(object): # create a resource endpoint from a property 
         return
     
 
-class RESTfulResource(Resource) :    
+class RESTfulResource(object) :    
     # when this resource is created
     def __init__(self, parentObject=None, resourceDescriptor = {}):
-        Resource.__init__(self)
+        self.resources = {} # the visible directory of resource names 
+        self.value = []
         # The resources dictionary is for subclasses of RESTfulResource, routable as http endpoints
         # The Properties dictionary is for serializable objects and strings, get/put but not routable
         self.Resources = RESTfulDictEndpoint(self.resources) #make resources endpoint from the dictionary
@@ -153,6 +156,22 @@ class RESTfulResource(Resource) :
         
         self.resources.update({'l': ResourceList(self)})
         
+    # return the default contents of this resource
+    def get(self) :
+        return self._get() 
+    
+    def _get(self) :
+        return self.value 
+    
+    # update the default contents of this resource
+    def set(self, newValue) :
+        self._set(newValue)
+        return
+
+    def _set(self, newValue) :
+        self.value=newValue
+        return
+        
     # new create takes dictionary built from JSON object POSTed to parent resource
     def create(self, resourceDescriptor):
         resourceName = resourceDescriptor['resourceName']
@@ -162,6 +181,35 @@ class RESTfulResource(Resource) :
             self.resources.update({resourceName : globals()[resourceClass](self, resourceDescriptor)}) 
         return self.resources[resourceName] # returns a reference to the created instance
                         
+    # for removing resources inside this resource
+    def delete(self, resourceName) :
+        # notify the resource that it's being deleted
+        self.resources[resourceName].cleanupRecursive()
+        #
+        # force dereference the object
+        #
+        # unlinks the resource 
+        del self.resources[resourceName] # remove dict entry FIXME remove reference to instance
+        return
+     
+    def cleanupRecursive(self):
+        # clean up, dereference, and unlink all child resources recursively
+        #
+        self._cleanup() # terminate threads and release resources
+        #
+        # recursively clean up, dereference, and unlink
+        for resource in self.resources:
+            #
+            self.resources[resource].cleanupRecursive()
+            #
+            # force dereference the object
+            #
+            # unlink the resource
+            del self.resources[resource]
+    
+    def _cleanup(self):
+        # override this in derived classes to terminate threads and release resources
+        pass
      
 """ Default representation is JSON, XML also supported
     Add parse and serialize for RDF graph, etc. for richer 
