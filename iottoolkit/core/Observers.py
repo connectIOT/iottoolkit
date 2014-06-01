@@ -34,9 +34,6 @@ class Observer(RESTfulResource):
         self._settings = self._resourceDescriptor
         self._baseObject = self.resources['baseObject']
         self._linkBaseDict = self.resources['baseObject'].resources
-        self._thisURI =  self.resources['baseObject'].Properties.get('httpService') \
-                    + self.resources['parentObject'].resources['parentObject'].Properties.get('pathFromBase')
-        self._settings.update({'thisURI': self._thisURI})
         self._init() 
         
     def _init(self):
@@ -98,6 +95,10 @@ class httpSubscriber(Observer):
         if 'observerURI' in self._settings: # means Subscriber settings were passed in on constructor
             self._createRemoteObserver()
             
+        self._thisURI =  self.resources['baseObject'].Properties.get('httpService') \
+                    + self.resources['parentObject'].resources['parentObject'].Properties.get('pathFromBase')
+        self._settings.update({'thisURI': self._thisURI})
+
     def _updateSettings(self):
         if self._settings.has_key('observerURI'): # if the observerURI is in the subscriber settings
             if not 'observerURI' in self._observerSettings : # but not in the remote observer settings

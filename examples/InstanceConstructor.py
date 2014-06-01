@@ -4,7 +4,9 @@ Created on Dec 12, 2013
 Create services from a service model instance, create objects from an object model instance 
 How are base objects mapped to services? 
 This file creates a service object that has multiple services and a single object tree
-There could be a service creation service where POSTing this descriptor would 
+There could be a service creation service where POSTing this descriptor would build objects 
+and create service instance, and this will be built as function sets, probably part of 
+Resource Directory (RD)
 
 @author: mjkoster
 '''
@@ -55,13 +57,7 @@ services = {
         'IPV4': '',
         'root': '/',
         'discovery': '/' 
-                    },
-    'localMQTT' : {
-        'scheme': 'mqtt',
-        'FQDN': 'localhost',
-        'port': 1880,
-        'IPV4': '',
-                    },
+                }
              }
 
 object_metadata = {
@@ -90,7 +86,7 @@ objects = {
         'resourceClass': 'ObservableProperty',
         'resourceType': 'temperature',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/indoor_temperature'],
+        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_temperature'],
         'publisher': '',
         'bridge': ''
         }
@@ -167,26 +163,29 @@ class SystemInstance(object):
 
         '''
         make objects from object models first
-        make list sorted by path length for import from graph, 
+        make list sorted by path element count + length for import from graph, 
         could count a split list but this should be the same if we eat slashes somewhere
         '''
-        self._resourceList = sorted( self._objects.keys(), key=str.count('/') )
-        for self._resource in self._resourceList:
-            self._resourceDescriptor = self._objects[self._resource]
+        self._resourceList = sorted( self._objects.keys(), key=lambda s:s.count('/') )
+        self._resourceList = sorted( self._resourceList, key=lambda s:len(s))
+        for self._resourceLink in self._resourceList:
+            self._resourceDescriptor = self._objects[self._resourceLink]
             # see if base object needs to be created. 
-            if self._resource is '/' and self._resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
-                self._baseObject = SmartObject(self._resourceDescriptor)
+            if self._resourceLink is '/' and self._resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
+                self._newResource = SmartObject()
+                self._baseObject = self._newResource
             else:
-                self._newResource = self._objectFromPath(self._resource).create(self._resourceDescriptor)
+                self._parentLink = '/'.join(self._resourceLink.split('/')[:-1])
+                self._newResource = self._objectFromPath(self._parentLink, self._baseObject).create(self._resourceDescriptor)
                 
             if self._resourceDescriptor['resourceClass'] in self._defaultResources:
-                for self._defaultResource in self._defaultResources[self._resource]:
+                for self._defaultResource in self._defaultResources[self._resourceDescriptor['resourceClass']]:
                     self._newChildResource = self._newResource.create({
                                         'resourceName': self._defaultResource,
                                         'resourceClass': self._defaultResource
                                         })
                     if self._defaultResource is 'Description': 
-                        self._newChildResource.create(self._graphFromModel(self._resource, self._resourceDescriptor))
+                        self._newChildResource.create(self._graphFromModel(self._resourceLink, self._resourceDescriptor))
                         # FIXME need to aggregate graphs upstream
             # make observers from the list of URIs of each Observer type
             for self._resourceProperty in self._resourceDescriptor:
@@ -206,20 +205,20 @@ class SystemInstance(object):
             self._serviceDescription.set(self._graphFromModel(self._serviceName, self._services[self._serviceName]))
             
             
-    def _graphFromModel(self, link, model):
+    def _graphFromModel(self, link, meta):
         # make rdf-json from the model and return RDF graph for loading into Description
-        g=rdflib.graph()
+        g=rdflib.Graph()
         subject=URIRef(link)
-        for relation in model:
-            value = model[relation]
-            g.add(subject, Literal(relation), Literal(value))
+        for relation in meta:
+            value = meta[relation]
+            g.add((subject, Literal(relation), Literal(value)))
         return g
 
     def _observerFromURI(self, currentResource, observerType, observerURI):
         # split by scheme
         URIObject=urlparse(observerURI)
         # fill in constructor template
-        if URIObject.scheme is 'http':
+        if URIObject.scheme == 'http':
             if observerType is 'publisher':
                 resourceConstructor = self._httpPublisherTemplate.copy()
                 resourceConstructor['targetURI'] = observerURI
@@ -227,7 +226,7 @@ class SystemInstance(object):
                 resourceConstructor = self._httpSubscriberTemplate.copy()
                 resourceConstructor['observerURI'] = observerURI
     
-        if URIObject.scheme is 'coap':
+        elif URIObject.scheme == 'coap':
             if observerType is 'publisher':
                 resourceConstructor = self._coapPublisherTemplate.copy()
                 resourceConstructor['targetURI'] = observerURI
@@ -235,7 +234,7 @@ class SystemInstance(object):
                 resourceConstructor = self._coapSubscriberTemplate.copy()
                 resourceConstructor['observerURI'] = observerURI
     
-        if URIObject.scheme is 'mqtt':
+        elif URIObject.scheme == 'mqtt':
             resourceConstructor = self._mqttObserverTemplate.copy() 
             resourceConstructor['connection'] = URIObject.netloc
             if observerType is 'publisher':
@@ -246,9 +245,13 @@ class SystemInstance(object):
                 resourceConstructor['pubTopic'] = URIObject.path
                 resourceConstructor['subTopic'] = URIObject.path
 
-        if URIObject.scheme is 'handler':
+        elif URIObject.scheme == 'handler':
             resourceConstructor = self._callbackNotifierTemplate.copy()   
             resourceConstructor['handlerURI'] = observerURI
+            
+        else:
+            print 'no scheme', URIObject.scheme
+            return
             
         #create resource in currentResource.resources['Observers'] container  
         currentResource.resources['Observers'].create(resourceConstructor)      
@@ -256,19 +259,21 @@ class SystemInstance(object):
     def _objectFromPath(self, path, baseObject):
     # fails if resource doesn't exist
         currentObject=baseObject
-        for pathElement in path.split('/')[:-1]:
-            currentObject=object.resources[pathElement]
-            return currentObject
+        pathList = path.split('/')[1:]
+        for pathElement in pathList:
+            currentObject=currentObject.resources[pathElement]
+        return currentObject
 
 class ServiceObject(RESTfulResource):
     def __init__(self, serviceName, serviceConstructor, baseObject):
-        resourceConstructor = {
+        self._resourceConstructor = {
                                'resourceName': serviceName,
                                'resourceClass': serviceConstructor['scheme']
                                }
-        RESTfulResource.__init__(self, baseObject, resourceConstructor )
+        
+        RESTfulResource.__init__(self, baseObject, self._resourceConstructor )
         self._serviceConstructor = serviceConstructor
-                  
+        # TODO collect IP addresses and update the constructor
         if self._serviceConstructor['scheme'] is 'http':
             self._httpService = HttpObjectService\
             (self._objectFromPath(self._serviceConstructor['root'], baseObject), port=self._serviceConstructor['port'])
@@ -285,6 +290,15 @@ class ServiceObject(RESTfulResource):
             subprocess.call('mosquitto -d -p ', self._serviceConstructor['port'])
             
         self._set(self._serviceConstructor)
+
+    def _objectFromPath(self, path, baseObject):
+    # fails if resource doesn't exist
+        currentObject=baseObject
+        pathList = path.split('/')[1:]
+        for pathElement in pathList:
+            if len(pathElement) > 0:
+                currentObject=currentObject.resources[pathElement]
+        return currentObject
 
 
 if __name__ == '__main__' :
