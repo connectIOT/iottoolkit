@@ -81,12 +81,21 @@ objects = {
         'resourceName': 'rhvWeather-01',
         'resourceClass': 'SmartObject'
         },
-    '/sensors/rhvWeather-01/indoor_temperature': {
-        'resourceName': 'indoor_temperature',
+    '/sensors/rhvWeather-01/outdoor_temperature': {
+        'resourceName': 'outdoor_temperature',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'temperature',
         'interfaceType':'sensor',
         'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_temperature'],
+        'publisher': '',
+        'bridge': ''
+        },
+    '/sensors/rhvWeather-01/outdoor_humidity': {
+        'resourceName': 'outdoor_humidity',
+        'resourceClass': 'ObservableProperty',
+        'resourceType': 'humidity',
+        'interfaceType':'sensor',
+        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_humidity'],
         'publisher': '',
         'bridge': ''
         }
@@ -165,6 +174,7 @@ class SystemInstance(object):
         make objects from object models first
         make list sorted by path element count + length for import from graph, 
         could count a split list but this should be the same if we eat slashes somewhere
+        having the root object called '/' and '/' as the separator is extra work 
         '''
         self._resourceList = sorted( self._objects.keys(), key=lambda s:s.count('/') )
         self._resourceList = sorted( self._resourceList, key=lambda s:len(s))
@@ -176,8 +186,9 @@ class SystemInstance(object):
                 self._baseObject = self._newResource
             else:
                 self._parentLink = '/'.join(self._resourceLink.split('/')[:-1])
-                self._newResource = self._objectFromPath(self._parentLink, self._baseObject).create(self._resourceDescriptor)
-                
+                if self._parentLink == '': self._parentLink = '/'
+                self._parentObject = self._objectFromPath(self._parentLink, self._baseObject)
+                self._newResource = self._parentObject.create( self._resourceDescriptor)
             if self._resourceDescriptor['resourceClass'] in self._defaultResources:
                 for self._defaultResource in self._defaultResources[self._resourceDescriptor['resourceClass']]:
                     self._newChildResource = self._newResource.create({
@@ -254,14 +265,15 @@ class SystemInstance(object):
             return
             
         #create resource in currentResource.resources['Observers'] container  
-        currentResource.resources['Observers'].create(resourceConstructor)      
+        newObserver = currentResource.resources['Observers'].create(resourceConstructor) 
 
     def _objectFromPath(self, path, baseObject):
     # fails if resource doesn't exist
         currentObject=baseObject
         pathList = path.split('/')[1:]
         for pathElement in pathList:
-            currentObject=currentObject.resources[pathElement]
+            if len(pathElement) > 0:
+                currentObject=currentObject.resources[pathElement]
         return currentObject
 
 class ServiceObject(RESTfulResource):
@@ -312,6 +324,9 @@ if __name__ == '__main__' :
                              }
     
     system = SystemInstance(systemConstructor)
+    
+    print system._baseObject.resources['services'].resources['localHTTP'].get()
+    print system._baseObject.resources['services'].resources['localCoAP'].get()
               
     try:
     # register handlers etc.
