@@ -8,9 +8,6 @@ There could be a service creation service where POSTing this descriptor would
 
 @author: mjkoster
 '''
-from interfaces.HttpObjectService import HttpObjectService
-from interfaces.CoapObjectService import CoapObjectService
-
 from core.RESTfulResource import RESTfulResource
 from core.SmartObject import SmartObject
 from core.Description import Description
@@ -21,14 +18,12 @@ from rdflib.term import Literal, URIRef
 from interfaces.HttpObjectService import HttpObjectService
 from interfaces.CoapObjectService import CoapObjectService
 from time import sleep
+from urlparse import urlparse
 import sys
 import subprocess
 import rdflib
-from urlparse import urlparse
-
 
 #workaround to register rdf JSON plugins 
-import rdflib
 from rdflib.plugin import Serializer, Parser
 rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
 rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
@@ -210,6 +205,7 @@ class SystemInstance(object):
             self._serviceRegistry.resources.update({self._serviceName:self._newService})
             self._serviceDescription.set(self._graphFromModel(self._serviceName, self._services[self._serviceName]))
             
+            
     def _graphFromModel(self, link, model):
         # make rdf-json from the model and return RDF graph for loading into Description
         g=rdflib.graph()
@@ -271,20 +267,27 @@ class ServiceObject(RESTfulResource):
                                'resourceClass': serviceConstructor['scheme']
                                }
         RESTfulResource.__init__(self, baseObject, resourceConstructor )
-        self._set(serviceConstructor)
+        self._serviceConstructor = serviceConstructor
                   
-        if serviceConstructor['scheme'] is 'http':
-            HttpObjectService(self._objectFromPath(serviceConstructor['root'], baseObject), port=serviceConstructor['port'])
+        if self._serviceConstructor['scheme'] is 'http':
+            self._httpService = HttpObjectService\
+            (self._objectFromPath(self._serviceConstructor['root'], baseObject), port=self._serviceConstructor['port'])
+            URLObject= urlparse(self._httpService._baseObject.Properties.get('httpService'))
+            self._serviceConstructor['FQDN'] = URLObject.netloc.split(':')[0]
             
-        if serviceConstructor['scheme'] is 'coap':
-            CoapObjectService(self._objectFromPath(serviceConstructor['root'], baseObject), port=serviceConstructor['port'])
+        if self._serviceConstructor['scheme'] is 'coap':
+            self._coapService = CoapObjectService\
+            (self._objectFromPath(self._serviceConstructor['root'], baseObject), port=self._serviceConstructor['port'])
+            URLObject= urlparse(self._coapService._baseObject.Properties.get('coapService'))
+            self._serviceConstructor['FQDN'] = URLObject.netloc.split(':')[0]
                 
         if serviceConstructor['scheme'] is 'mqtt':
-            subprocess.call('mosquitto -d -p ', serviceConstructor['port'])
+            subprocess.call('mosquitto -d -p ', self._serviceConstructor['port'])
+            
+        self._set(self._serviceConstructor)
 
 
 if __name__ == '__main__' :
-    
     '''
     make an instance using the example constructors
     '''
