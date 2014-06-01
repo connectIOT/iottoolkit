@@ -12,16 +12,11 @@ Resource Directory (RD)
 '''
 from core.RESTfulResource import RESTfulResource
 from core.SmartObject import SmartObject
-from core.Description import Description
-from core.ObservableProperty import ObservableProperty
-from core.Observers import Observers
-from core.PropertyOfInterest import PropertyOfInterest
 from rdflib.term import Literal, URIRef
 from interfaces.HttpObjectService import HttpObjectService
 from interfaces.CoapObjectService import CoapObjectService
 from time import sleep
 from urlparse import urlparse
-import sys
 import subprocess
 import rdflib
 
@@ -31,7 +26,7 @@ rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonL
 rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
 rdflib.plugin.register('rdf-json', Serializer, 'rdflib_rdfjson.rdfjson_serializer', 'RdfJsonSerializer')
 rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonParser')
-
+print 'registered processors'
 '''
 model format for populating Description and creating SmartObject instances and service instances
 '''
@@ -197,6 +192,8 @@ class SystemInstance(object):
                                         })
                     if self._defaultResource is 'Description': 
                         self._newChildResource.create(self._graphFromModel(self._resourceLink, self._resourceDescriptor))
+                        self._newResource.create({'resourceName':'.well-known', 'resourceClass':'Agent'})\
+                        .create({'resourceName':'core', 'resourceClass':'LinkFormatProxy'})
                         # FIXME need to aggregate graphs upstream
             # make observers from the list of URIs of each Observer type
             for self._resourceProperty in self._resourceDescriptor:

@@ -15,6 +15,7 @@ for example myObserver.set({'handlerClass': 'SmartObject.Agent.additionHandler'}
 
 
 from RESTfulResource import RESTfulResource
+from LinkFormatProxy import LinkFormatProxy
 
 class Handler(RESTfulResource):   # single base class for handlers to extend directly, contains convenience methods for linking resources
     def __init__(self, parentObject=None, resourceDescriptor = {}):
