@@ -22,6 +22,9 @@ from interfaces.HttpObjectService import HttpObjectService
 from interfaces.CoapObjectService import CoapObjectService
 from time import sleep
 import sys
+import subprocess
+import rdflib
+from urlparse import urlparse
 
 
 #workaround to register rdf JSON plugins 
@@ -49,8 +52,7 @@ services = {
         'IPV4': '',
         'root': '/',
         'discovery': '/'
-                    },
-                
+                    },                
     'localCoAP': {
         'scheme': 'coap',
         'FQDN': 'localhost',
@@ -58,24 +60,17 @@ services = {
         'IPV4': '',
         'root': '/',
         'discovery': '/' 
-                    }
+                    },
+    'localMQTT' : {
+        'scheme': 'mqtt',
+        'FQDN': 'localhost',
+        'port': 1880,
+        'IPV4': '',
+                    },
              }
 
-"""
-Minimal server needs one base object 
-Starting a server will create one but this provides a discoverable model and container
-
-objects = {
-    '/': {
-        'resourceName': '/',
-        'resourceClass': 'SmartObject'
-        },
-    }
-"""   
- 
 object_metadata = {
     'objectPath': '',
-    'mqtt_timeout': 120
     }
 
 objects = {
@@ -100,82 +95,12 @@ objects = {
         'resourceClass': 'ObservableProperty',
         'resourceType': 'temperature',
         'interfaceType':'sensor',
-        'subscribers': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/indoor_temperature'],
-        'publishers': '',
-        'bridges': ''
+        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/indoor_temperature'],
+        'publisher': '',
+        'bridge': ''
         }
     }
 
-mqttObserverTemplate = {
-    'resourceName': 'mqttObserver',
-    'resourceClass': 'mqttObserver',
-    'connection': 'localhost',
-    'pubTopic': '',
-    'subTopic': ''
-    }
-
-httpPublisherTemplate = {
-    'resourceName': 'httpPublisher',
-    'resourceClass': 'httpPublisher',
-    'connection': 'localhost'
-    }
-
-httpSubscriberTemplate = {
-    'resourceName': 'httpSubscriber',
-    'resourceClass': 'httpSubscriber',
-    'connection': 'localhost',
-    }
-
-callbackNotifierTemplate = {
-    'resourceName': 'callbackNotifier',
-    'resourceClass': 'callbackNotifier',
-    'handlerURI': 'localhost'
-    }
-
-
-baseObject = None
-
-def objectFromPath(self,path, baseObject):
-    currentObject=baseObject
-    for pathElement in path.split('/')[:-1]:
-        currentObject=object.resources[pathElement]
-    return currentObject
-
-def observerFromURI(self, currentResource, observerURI):
-    # split by scheme
-    # fill in template
-    #create resource        
-    pass
-
-def graphFromModel(self, model):
-    # make rdf-json from the model and parse to RDF graph
-    pass
-
-class mqttService(object):
-    # start up an instance of mosquitto at the specified port and register it
-    pass
-
-class ServiceObject(RESTfulResource):
-    def __init__(self, resourceDescriptor):
-        RESTfulResource.__init__(self)
-    
-"""        
-    if services[serviceName]['scheme'] is 'http':
-        servicePort = services[serviceName]['port']
-        serviceRoot = services[serviceName]['root']
-        serviceRootObject = objectFromPath(serviceRoot)
-        httpServiceInstance = HttpObjectService(serviceRootObject, port=servicePort)
-            
-        if services[serviceName]['scheme'] is 'coap':
-            servicePort = services[serviceName]['port']
-            serviceRoot = services[serviceName]['root']
-            serviceRootObject = objectFromPath(serviceRoot)
-            coapServiceInstance = CoapObjectService(serviceRootObject, port=servicePort)
-                
-        if services[serviceName]['scheme'] is 'mqtt':
-            servicePort = services[serviceName]['port']
-            mqttServiceInstance = mqttService(port=servicePort)
-"""
 
 class SystemInstance(object):
     '''
@@ -201,9 +126,49 @@ class SystemInstance(object):
                                   'ObservableProperty': ['Description', 'Observers']
                                   }
 
-        self._observerTypes = ['subscribers', 'publishers', 'bridges']
+        self._observerTypes = ['subscriber', 'publisher', 'bridge']
         
-        self._observerSchemes = ['http', 'coap', 'handler', ]
+        self._observerSchemes = ['http', 'coap', 'mqtt', 'handler']
+
+        self._mqttObserverTemplate = {
+                                      'resourceName': 'mqttObserver',
+                                      'resourceClass': 'mqttObserver',
+                                      'connection': 'localhost',
+                                      'pubTopic': '',
+                                      'subTopic': '',
+                                      'keepAlive': 60,
+                                      'QoS': 0
+                                      }
+        
+        self._httpPublisherTemplate = {
+                                       'resourceName': 'httpPublisher',
+                                       'resourceClass': 'httpPublisher',
+                                       'targetURI': 'http://localhost:8000/'
+                                       }
+        
+        self._httpSubscriberTemplate = {
+                                        'resourceName': 'httpSubscriber',
+                                        'resourceClass': 'httpSubscriber',
+                                        'ObserverURI': 'http://localhost:8000/',
+                                        }
+        
+        self._coapPublisherTemplate = {
+                                       'resourceName': 'coapPublisher',
+                                       'resourceClass': 'coapPublisher',
+                                       'targetURI': 'coap://localhost:5683/'
+                                       }
+        
+        self._coapSubscriberTemplate = {
+                                        'resourceName': 'coapSubscriber',
+                                        'resourceClass': 'coapSubscriber',
+                                        'connection': 'coap://localhost:5683/'
+                                        }
+
+        self._callbackNotifierTemplate = {
+                                          'resourceName': 'callbackNotifier',
+                                          'resourceClass': 'callbackNotifier',
+                                          'handlerURI': 'handler://'
+                                          }
 
         '''
         make objects from object models first
@@ -211,39 +176,111 @@ class SystemInstance(object):
         could count a split list but this should be the same if we eat slashes somewhere
         '''
         self._resourceList = sorted( self._objects.keys(), key=str.count('/') )
-        for resource in self._resourceList:
-            resourceDescriptor = self._objects[resource]
+        for self._resource in self._resourceList:
+            self._resourceDescriptor = self._objects[self._resource]
             # see if base object needs to be created. 
-            if resource is '/' and resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
-                self._baseObject = SmartObject(resourceDescriptor)
+            if self._resource is '/' and self._resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
+                self._baseObject = SmartObject(self._resourceDescriptor)
             else:
-                newResource = objectFromPath(resource).create(resourceDescriptor)
+                self._newResource = self._objectFromPath(self._resource).create(self._resourceDescriptor)
                 
-            if resourceDescriptor['resourceClass'] in self._defaultResources:
-                for defaultResource in self._defaultResources[resource]:
-                    newChildResource = newResource.create({
-                                        'resourceName': defaultResource,
-                                        'resourceClass': defaultResource
+            if self._resourceDescriptor['resourceClass'] in self._defaultResources:
+                for self._defaultResource in self._defaultResources[self._resource]:
+                    self._newChildResource = self._newResource.create({
+                                        'resourceName': self._defaultResource,
+                                        'resourceClass': self._defaultResource
                                         })
-                    if defaultResource is 'Description': 
-                        newChildResource.create(graphFromModel(resourceDescriptor))
-                    # FIXME need to aggregate graphs upstream
-                    # make observers from the list of URIs of each Observer type
-            for resourceProperty in resourceDescriptor:
-                if resourceProperty in self._observerTypes:
-                    for observerURI in resourceDescriptor[resourceProperty]:
-                        observerFromURI(newResource, observerURI )
+                    if self._defaultResource is 'Description': 
+                        self._newChildResource.create(self._graphFromModel(self._resource, self._resourceDescriptor))
+                        # FIXME need to aggregate graphs upstream
+            # make observers from the list of URIs of each Observer type
+            for self._resourceProperty in self._resourceDescriptor:
+                if self._resourceProperty in self._observerTypes:
+                    for self._observerURI in self._resourceDescriptor[self._resourceProperty]:
+                        self._observerFromURI(self._newResource, self._resourceProperty, self._observerURI )
         '''
         make services
         '''
         # make this a service Object (RESTfulResource) with dict as constructor
-        self._serviceRegistry = objectFromPath('/services', self._baseObject)
-        serviceDescription = objectFromPath('/services/Description', self._baseObject)        
+        self._serviceRegistry = self._objectFromPath('/services', self._baseObject)
+        self._serviceDescription = self._objectFromPath('/services/Description', self._baseObject)        
     
-        for serviceName in self._services:
-            newService = ServiceObject(self._services[serviceName])
-            self._serviceRegistry.resources.update( {newService.Properties['resourceName']: newService} )
-            serviceDescription.create()
+        for self._serviceName in self._services:
+            self._newService = ServiceObject(self._serviceName, self._services[self._serviceName], self._serviceRegistry)
+            self._serviceRegistry.resources.update({self._serviceName:self._newService})
+            self._serviceDescription.set(self._graphFromModel(self._serviceName, self._services[self._serviceName]))
+            
+    def _graphFromModel(self, link, model):
+        # make rdf-json from the model and return RDF graph for loading into Description
+        g=rdflib.graph()
+        subject=URIRef(link)
+        for relation in model:
+            value = model[relation]
+            g.add(subject, Literal(relation), Literal(value))
+        return g
+
+    def _observerFromURI(self, currentResource, observerType, observerURI):
+        # split by scheme
+        URIObject=urlparse(observerURI)
+        # fill in constructor template
+        if URIObject.scheme is 'http':
+            if observerType is 'publisher':
+                resourceConstructor = self._httpPublisherTemplate.copy()
+                resourceConstructor['targetURI'] = observerURI
+            if observerType is 'subscriber':
+                resourceConstructor = self._httpSubscriberTemplate.copy()
+                resourceConstructor['observerURI'] = observerURI
+    
+        if URIObject.scheme is 'coap':
+            if observerType is 'publisher':
+                resourceConstructor = self._coapPublisherTemplate.copy()
+                resourceConstructor['targetURI'] = observerURI
+            if observerType is 'subscriber':
+                resourceConstructor = self._coapSubscriberTemplate.copy()
+                resourceConstructor['observerURI'] = observerURI
+    
+        if URIObject.scheme is 'mqtt':
+            resourceConstructor = self._mqttObserverTemplate.copy() 
+            resourceConstructor['connection'] = URIObject.netloc
+            if observerType is 'publisher':
+                resourceConstructor['pubTopic'] = URIObject.path
+            if observerType is 'subscriber':
+                resourceConstructor['subTopic'] = URIObject.path
+            if observerType is 'bridge':
+                resourceConstructor['pubTopic'] = URIObject.path
+                resourceConstructor['subTopic'] = URIObject.path
+
+        if URIObject.scheme is 'handler':
+            resourceConstructor = self._callbackNotifierTemplate.copy()   
+            resourceConstructor['handlerURI'] = observerURI
+            
+        #create resource in currentResource.resources['Observers'] container  
+        currentResource.resources['Observers'].create(resourceConstructor)      
+
+    def _objectFromPath(self, path, baseObject):
+    # fails if resource doesn't exist
+        currentObject=baseObject
+        for pathElement in path.split('/')[:-1]:
+            currentObject=object.resources[pathElement]
+            return currentObject
+
+class ServiceObject(RESTfulResource):
+    def __init__(self, serviceName, serviceConstructor, baseObject):
+        resourceConstructor = {
+                               'resourceName': serviceName,
+                               'resourceClass': serviceConstructor['scheme']
+                               }
+        RESTfulResource.__init__(self, baseObject, resourceConstructor )
+        self._set(serviceConstructor)
+                  
+        if serviceConstructor['scheme'] is 'http':
+            HttpObjectService(self._objectFromPath(serviceConstructor['root'], baseObject), port=serviceConstructor['port'])
+            
+        if serviceConstructor['scheme'] is 'coap':
+            CoapObjectService(self._objectFromPath(serviceConstructor['root'], baseObject), port=serviceConstructor['port'])
+                
+        if serviceConstructor['scheme'] is 'mqtt':
+            subprocess.call('mosquitto -d -p ', serviceConstructor['port'])
 
 
 if __name__ == '__main__' :
@@ -251,11 +288,13 @@ if __name__ == '__main__' :
     '''
     make an instance using the example constructors
     '''
-    system = SystemInstance({'service_metadata': service_metadata,
+    systemConstructor = {'service_metadata': service_metadata,
                              'services': services,
                              'object_metadata': object_metadata,
                              'objects': objects
-                             })
+                             }
+    
+    system = SystemInstance(systemConstructor)
               
     try:
     # register handlers etc.
