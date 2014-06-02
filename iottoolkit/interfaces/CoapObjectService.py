@@ -43,8 +43,8 @@ class CoapObjectService(object):
 class CoapRequestHandler(object):
     def __init__(self,baseObject):
         self._linkCache = {}
-        self._linkBaseDict = baseObject.resources
-    
+        self._baseObject = baseObject
+        
     def do_GET(self, path, options=None):
         self._query = None
         self._observing = False
@@ -54,7 +54,7 @@ class CoapRequestHandler(object):
                 self._query = value
             if number == COAPOption.OBSERVE:
                 self._observing = True
-        self._currentResource = self.linkToRef(path)
+        self._currentResource = self.linkToRef(path, self._baseObject)
         
         if hasattr(self._currentResource, 'serialize'):
             self._contentType = self._currentResource._serializeContentTypes[0]
@@ -64,7 +64,7 @@ class CoapRequestHandler(object):
             return 200, json.dumps(self._currentResource.get()), self._contentType
     
     def do_POST(self, path, payload, options=None):
-        self._currentResource = self.linkToRef(path)
+        self._currentResource = self.linkToRef(path, self._baseObject)
         if hasattr(self._currentResource, 'serialize'):
             self._contentType=self._currentResource._serializeContentTypes[0]
             self._currentResource.set( self._currentResource.parse(str(payload), self._contentType) )
@@ -80,7 +80,7 @@ class CoapRequestHandler(object):
     def do_DELETE(self, path, payload, flag):
         pass
     
-    def linkToRef(self, linkPath):
+    def linkToRef(self, linkPath, baseObject):
         '''
         takes a path string and walks the object tree from a base dictionary
         returns a ref to the resource at the path endpoint
@@ -90,7 +90,7 @@ class CoapRequestHandler(object):
         if self._linkPath in self._linkCache.keys() :
             return self._linkCache[self._linkPath]
         # cache miss, walk path and update cache at end
-        self._currentDict = self._linkBaseDict
+        self._currentDict = baseObject.resources
         self._pathElements = linkPath.split('/')
         for pathElement in self._pathElements[:-1] : # all but the last, which should be the endpoint
             self._currentDict = self._currentDict[pathElement].resources

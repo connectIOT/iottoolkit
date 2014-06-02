@@ -208,7 +208,7 @@ class SystemInstance(object):
         self._serviceDescription = self._objectFromPath('/services/Description', self._baseObject)        
     
         for self._serviceName in self._services:
-            self._newService = ServiceObject(self._serviceName, self._services[self._serviceName], self._serviceRegistry)
+            self._newService = ServiceObject(self._serviceName, self._services[self._serviceName], self._baseObject)
             self._serviceRegistry.resources.update({self._serviceName:self._newService})
             self._serviceDescription.set(self._graphFromModel(self._serviceName, self._services[self._serviceName]))
             
@@ -322,9 +322,6 @@ if __name__ == '__main__' :
     
     system = SystemInstance(systemConstructor)
     
-    print system._baseObject.resources['services'].resources['localHTTP'].get()
-    print system._baseObject.resources['services'].resources['localCoAP'].get()
-              
     try:
     # register handlers etc.
         while 1: sleep(1)
