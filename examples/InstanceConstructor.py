@@ -26,7 +26,6 @@ rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonL
 rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
 rdflib.plugin.register('rdf-json', Serializer, 'rdflib_rdfjson.rdfjson_serializer', 'RdfJsonSerializer')
 rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'RdfJsonParser')
-print 'registered processors'
 '''
 model format for populating Description and creating SmartObject instances and service instances
 '''
