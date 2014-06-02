@@ -27,6 +27,7 @@ from RESTfulResource import RESTfulResource
 from PropertyOfInterest import PropertyOfInterest
 from Description import Description
 from Observers import Observers
+from Agent import Agent
 
 class ObservableProperty(RESTfulResource):
     
