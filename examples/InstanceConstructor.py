@@ -29,13 +29,14 @@ rdflib.plugin.register('rdf-json', Parser, 'rdflib_rdfjson.rdfjson_parser', 'Rdf
 '''
 model format for populating Description and creating SmartObject instances and service instances
 '''
-service_metadata = {
+exampleConstructor = {
+'service_metadata': {
     'FQDN': '',
     'IPV4': '',
     'IPV6': ''
-    }
+    },
 #replace with unique service URIs e.g. http://localhost:8000  when starting service instances
-services = {
+'services': {
     'localHTTP' : {
         'scheme': 'http',
         'FQDN': 'localhost',
@@ -52,13 +53,13 @@ services = {
         'root': '/',
         'discovery': '/' 
                 }
-             }
+             },
 
-object_metadata = {
+'object_metadata': {
     'objectPath': '',
-    }
+    },
 
-objects = {
+'objects': {
     '/': {
         'resourceName': '/',
         'resourceClass': 'SmartObject'
@@ -139,7 +140,8 @@ objects = {
         'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/daily_rain'],
        }
     }
-
+                      
+}
 
 class SystemInstance(object):
     '''
@@ -356,15 +358,9 @@ class ServiceObject(RESTfulResource):
 
 if __name__ == '__main__' :
     '''
-    make an instance using the example constructors
+    make an instance using the example constructor
     '''
-    systemConstructor = {'service_metadata': service_metadata,
-                             'services': services,
-                             'object_metadata': object_metadata,
-                             'objects': objects
-                             }
-    
-    system = SystemInstance(systemConstructor)
+    system = SystemInstance(exampleConstructor)
     
     try:
     # register handlers etc.
