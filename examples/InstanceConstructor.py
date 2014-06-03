@@ -81,63 +81,63 @@ exampleConstructor = {
         'resourceClass': 'ObservableProperty',
         'resourceType': 'temperature',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_temperature'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_temperature'],
         },
     '/sensors/rhvWeather-01/outdoor_humidity': {
         'resourceName': 'outdoor_humidity',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'humidity',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_humidity'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_humidity'],
        },
     '/sensors/rhvWeather-01/sealevel_pressure': {
         'resourceName': 'sealevel_pressure',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'pressure',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/sealevel_pressure'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/sealevel_pressure'],
        },
     '/sensors/rhvWeather-01/wind_speed': {
         'resourceName': 'wind_speed',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'speed',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_speed'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_speed'],
        },
     '/sensors/rhvWeather-01/wind_gust': {
         'resourceName': 'wind_gust',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'speed',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_gust'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_gust'],
        },
     '/sensors/rhvWeather-01/wind_direction': {
         'resourceName': 'wind_direction',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'direction',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_direction'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_direction'],
        },
     '/sensors/rhvWeather-01/current_rain': {
         'resourceName': 'current_rain',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'depth',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/current_rain'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/current_rain'],
        },
     '/sensors/rhvWeather-01/hourly_rain': {
         'resourceName': 'hourly_rain',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'depth',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/hourly_rain'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/hourly_rain'],
        },
     '/sensors/rhvWeather-01/daily_rain': {
         'resourceName': 'daily_rain',
         'resourceClass': 'ObservableProperty',
         'resourceType': 'depth',
         'interfaceType':'sensor',
-        'subscriber': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/daily_rain'],
+        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/daily_rain'],
        }
     }
                       
@@ -167,7 +167,7 @@ class SystemInstance(object):
                                   'ObservableProperty': ['Description', 'Observers']
                                   }
 
-        self._observerTypes = ['subscriber', 'publisher', 'bridge']
+        self._observerTypes = ['subscribesTo', 'publishesTo', 'bridgesTo', 'handledBy']
         
         self._observerSchemes = ['http', 'coap', 'mqtt', 'handler']
 
@@ -273,33 +273,33 @@ class SystemInstance(object):
         URIObject=urlparse(observerURI)
         # fill in constructor template
         if URIObject.scheme == 'http':
-            if observerType is 'publisher':
+            if observerType is 'publishesTo':
                 resourceConstructor = self._httpPublisherTemplate.copy()
                 resourceConstructor['targetURI'] = observerURI
-            if observerType is 'subscriber':
+            if observerType is 'subscribesTo':
                 resourceConstructor = self._httpSubscriberTemplate.copy()
                 resourceConstructor['observerURI'] = observerURI
     
         elif URIObject.scheme == 'coap':
-            if observerType is 'publisher':
+            if observerType is 'publishesTo':
                 resourceConstructor = self._coapPublisherTemplate.copy()
                 resourceConstructor['targetURI'] = observerURI
-            if observerType is 'subscriber':
+            if observerType is 'subscribesTo':
                 resourceConstructor = self._coapSubscriberTemplate.copy()
                 resourceConstructor['observerURI'] = observerURI
     
         elif URIObject.scheme == 'mqtt':
             resourceConstructor = self._mqttObserverTemplate.copy() 
             resourceConstructor['connection'] = URIObject.netloc
-            if observerType is 'publisher':
+            if observerType is 'publishesTo':
                 resourceConstructor['pubTopic'] = URIObject.path
-            if observerType is 'subscriber':
+            if observerType is 'subscribesTo':
                 resourceConstructor['subTopic'] = URIObject.path
-            if observerType is 'bridge':
+            if observerType is 'bridgesTo':
                 resourceConstructor['pubTopic'] = URIObject.path
                 resourceConstructor['subTopic'] = URIObject.path
 
-        elif URIObject.scheme == 'handler':
+        elif URIObject.scheme == 'handledBy':
             resourceConstructor = self._callbackNotifierTemplate.copy()   
             resourceConstructor['handlerURI'] = observerURI
             
