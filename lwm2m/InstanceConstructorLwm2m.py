@@ -68,77 +68,22 @@ exampleConstructor = {
         'resourceName': 'services',
         'resourceClass': 'SmartObject'
         },
-    '/sensors': {
-        'resourceName': 'sensors',
+    '/11100': {
+        'resourceName': '11100',
         'resourceClass': 'SmartObject'
         },
-    '/sensors/rhvWeather-01': {
-        'resourceName': 'rhvWeather-01',
+    '/11100/0': {
+        'resourceName': '0',
         'resourceClass': 'SmartObject'
         },
-    '/sensors/rhvWeather-01/outdoor_temperature': {
-        'resourceName': 'outdoor_temperature',
+    '/11100/0/5900': {
+        'resourceName': '5900',
         'resourceClass': 'ObservableProperty',
-        'resourceType': 'temperature',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_temperature'],
+        'resourceType': 'LEDcontrol',
+        'interfaceType':'actuator',
+        'dataType':'uint32'
         },
-    '/sensors/rhvWeather-01/outdoor_humidity': {
-        'resourceName': 'outdoor_humidity',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'humidity',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_humidity'],
-       },
-    '/sensors/rhvWeather-01/sealevel_pressure': {
-        'resourceName': 'sealevel_pressure',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'pressure',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/sealevel_pressure'],
-       },
-    '/sensors/rhvWeather-01/wind_speed': {
-        'resourceName': 'wind_speed',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'speed',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_speed'],
-       },
-    '/sensors/rhvWeather-01/wind_gust': {
-        'resourceName': 'wind_gust',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'speed',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_gust'],
-       },
-    '/sensors/rhvWeather-01/wind_direction': {
-        'resourceName': 'wind_direction',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'direction',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_direction'],
-       },
-    '/sensors/rhvWeather-01/current_rain': {
-        'resourceName': 'current_rain',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'depth',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/current_rain'],
-       },
-    '/sensors/rhvWeather-01/hourly_rain': {
-        'resourceName': 'hourly_rain',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'depth',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/hourly_rain'],
-       },
-    '/sensors/rhvWeather-01/daily_rain': {
-        'resourceName': 'daily_rain',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'depth',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/daily_rain'],
-       }
+
     }
                       
 }
