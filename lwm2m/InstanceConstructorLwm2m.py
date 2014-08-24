@@ -68,20 +68,25 @@ exampleConstructor = {
         'resourceName': 'services',
         'resourceClass': 'SmartObject'
         },
+    '/Agent/BLE_ColorLED_Handler': {
+        'resourceName': 'BLE_ColorLED_handler',
+        'resourceClass': 'BLE_ColorLED_handler'
+        },
     '/11100': {
         'resourceName': '11100',
-        'resourceClass': 'SmartObject'
+        'resourceClass': 'SmartObject' # LWM2M_Object
         },
     '/11100/0': {
         'resourceName': '0',
-        'resourceClass': 'SmartObject'
+        'resourceClass': 'SmartObject' # LWM2M_Instance
         },
     '/11100/0/5900': {
         'resourceName': '5900',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'LEDcontrol',
+        'resourceClass': 'ObservableProperty', # LWM2M_Resource
+        'resourceType': 'ColorLED',
         'interfaceType':'actuator',
-        'dataType':'uint32'
+        'dataType':'uint32',
+        'handledBy': ['handler://Agent/BLE_ColorLED_handler']
         },
 
     }
@@ -147,7 +152,7 @@ class SystemInstance(object):
         self._coapSubscriberTemplate = {
                                         'resourceName': 'coapSubscriber',
                                         'resourceClass': 'coapSubscriber',
-                                        'connection': 'coap://localhost:5683/'
+                                        'ObserverURI': 'coap://localhost:5683/'
                                         }
 
         self._callbackNotifierTemplate = {
@@ -244,7 +249,7 @@ class SystemInstance(object):
                 resourceConstructor['pubTopic'] = URIObject.path
                 resourceConstructor['subTopic'] = URIObject.path
 
-        elif URIObject.scheme == 'handledBy':
+        elif URIObject.scheme == 'handler':
             resourceConstructor = self._callbackNotifierTemplate.copy()   
             resourceConstructor['handlerURI'] = observerURI
             

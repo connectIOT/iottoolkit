@@ -202,7 +202,7 @@ class SystemInstance(object):
         self._coapSubscriberTemplate = {
                                         'resourceName': 'coapSubscriber',
                                         'resourceClass': 'coapSubscriber',
-                                        'connection': 'coap://localhost:5683/'
+                                        'ObserverURI': 'coap://localhost:5683/'
                                         }
 
         self._callbackNotifierTemplate = {
@@ -299,7 +299,7 @@ class SystemInstance(object):
                 resourceConstructor['pubTopic'] = URIObject.path
                 resourceConstructor['subTopic'] = URIObject.path
 
-        elif URIObject.scheme == 'handledBy':
+        elif URIObject.scheme == 'handler':
             resourceConstructor = self._callbackNotifierTemplate.copy()   
             resourceConstructor['handlerURI'] = observerURI
             
