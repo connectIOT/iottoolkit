@@ -16,6 +16,7 @@ for example myObserver.set({'handlerClass': 'SmartObject.Agent.additionHandler'}
 
 from RESTfulResource import RESTfulResource
 from LinkFormatProxy import LinkFormatProxy
+import subprocess
 
 class Handler(RESTfulResource):   # single base class for handlers to extend directly, contains convenience methods for linking resources
     def __init__(self, parentObject=None, resourceDescriptor = {}):
@@ -86,14 +87,10 @@ class logPrintHandler(Handler):
 
 class BLE_ColorLED_handler(Handler):
     def _handleNotify(self, resource = None ):
-        self._newColor = resource.get()
-        print self._newColor
-        self._macAddress = self._settings['MACaddress']
-        self._macType = self._settings['MACtype']
-        self._charHandle = self._settings['charHandle']
-        print "gatttool -b ", self._macAddress, " -t " , self._macType, \
-        " --char-write --handle=", self._charHandle," --value=", self._newColor
-        
+        self._command = "gatttool -b " + self._settings['MACaddress'] + " -t " + self._settings['MACtype'] + \
+        " --char-write --handle=" + self._settings['charHandle'] + " --value=0x" + resource.get()
+        print self._command
+        subprocess.call(self._command)
 
 class Agent(RESTfulResource):
     # Agent is a container for Handlers and daemons, instantiated as a resource of a SmartObject 
