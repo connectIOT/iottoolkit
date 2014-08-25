@@ -87,10 +87,13 @@ class logPrintHandler(Handler):
 
 class BLE_ColorLED_handler(Handler):
     def _handleNotify(self, resource = None ):
-        self._command = "gatttool -b " + self._settings['MACaddress'] + " -t " + self._settings['MACtype'] + \
-        " --char-write --handle=" + self._settings['charHandle'] + " --value=0x" + resource.get()
-        print self._command
-        subprocess.call(self._command)
+        subprocess.call([("gatttool"),\
+                         ("--device="+self._settings['MACaddress']),\
+                         ("--addr-type="+self._settings['MACtype']),\
+                         ("--char-write"),\
+                         ("--handle="+self._settings['charHandle']),\
+                         ("--value=0x"+resource.get())])
+
 
 class Agent(RESTfulResource):
     # Agent is a container for Handlers and daemons, instantiated as a resource of a SmartObject 
