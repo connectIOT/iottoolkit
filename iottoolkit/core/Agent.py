@@ -82,7 +82,18 @@ class addHandler(Handler): # an example appHandler that adds two values together
 class logPrintHandler(Handler):
     def _handleNotify(self, resource) :
         print resource.Properties.get('resourceName'), ' = ', resource.get()
- 
+
+
+class BLE_ColorLED_handler(Handler):
+    def _handleNotify(self, resource = None ):
+        self._newColor = resource.get()
+        print self._newColor
+        self._macAddress = self._settings['MACaddress']
+        self._macType = self._settings['MACtype']
+        self._charHandle = self._settings['charHandle']
+        print "gatttool -b ", self._macAddress, " -t " , self._macType, \
+        " --char-write --handle=", self._charHandle," --value=", self._newColor
+        
 
 class Agent(RESTfulResource):
     # Agent is a container for Handlers and daemons, instantiated as a resource of a SmartObject 

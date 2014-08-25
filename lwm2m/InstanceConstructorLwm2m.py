@@ -70,7 +70,10 @@ exampleConstructor = {
         },
     '/Agent/BLE_ColorLED_Handler': {
         'resourceName': 'BLE_ColorLED_handler',
-        'resourceClass': 'BLE_ColorLED_handler'
+        'resourceClass': 'BLE_ColorLED_handler',
+        'MACaddress': 'E0:DE:F3:62:42:D7',
+        'MACtype': 'random',
+        'charHandle': '0x000b'
         },
     '/11100': {
         'resourceName': '11100',
@@ -86,7 +89,7 @@ exampleConstructor = {
         'resourceType': 'ColorLED',
         'interfaceType':'actuator',
         'dataType':'uint32',
-        'handledBy': ['handler://Agent/BLE_ColorLED_handler']
+        'handledBy': ['handler:///Agent/BLE_ColorLED_handler']
         },
 
     }

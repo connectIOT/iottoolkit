@@ -63,7 +63,7 @@ class CoapRequestHandler(object):
             self._contentType='application/json'
             return 200, json.dumps(self._currentResource.get()), self._contentType
     
-    def do_POST(self, path, payload, options=None):
+    def do_PUT(self, path, payload, options=None):
         self._currentResource = self.linkToRef(path, self._baseObject)
         if hasattr(self._currentResource, 'serialize'):
             self._contentType=self._currentResource._serializeContentTypes[0]
@@ -74,7 +74,7 @@ class CoapRequestHandler(object):
             self._currentResource.set(json.loads(str(payload)))
             return 200, '', self._contentType
     
-    def do_PUT(self, path, payload, flag):
+    def do_POST(self, path, payload, flag):
         pass
     
     def do_DELETE(self, path, payload, flag):
@@ -609,8 +609,8 @@ class COAPServer(threading.Thread):
         
         if request.code == COAPRequest.GET:
             self.handler.do_GET(request, response)
-        elif request.code == COAPRequest.POST:
-            self.handler.do_POST(request, response)
+        elif request.code == COAPRequest.PUT:
+            self.handler.do_PUT(request, response)
         elif request.code / 32 == 0:
             response.code = COAPResponse.NOT_IMPLEMENTED
         else:
@@ -638,9 +638,9 @@ class COAPHandler():
             response.code = COAPResponse.INTERNAL_ERROR
             raise e
         
-    def do_POST(self, request, response):
+    def do_PUT(self, request, response):
         try:
-            (code, body, contentType) = self.handler.do_POST(request.uri_path[1:], request.payload, request.options)
+            (code, body, contentType) = self.handler.do_PUT(request.uri_path[1:], request.payload, request.options)
             if code == 0:
                 response.code = COAPResponse.NOT_FOUND
             elif code == 200:
