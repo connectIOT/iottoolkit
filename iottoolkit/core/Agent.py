@@ -1,14 +1,14 @@
 '''
 Created on Sep 15, 2012
 
-Agent classes. Contains reference to instance of class containing observer 
+Agent classes. Contains references to instances of classes containing observer 
 handlers and code 
 
 Agent Instances are created automatically. Create a named Handler instance under the Agent, 
-as an instance of the desired handler class, optionally specifying a module path setting {'classPath': '<path_to_module>'}
-by PUT (set) of a JSON object containing a dictionary of settings
+as an instance of the desired handler class, 
+by create (POST) of a JSON object containing a dictionary of settings 
 
-for example myObserver.set({'handlerClass': 'SmartObject.Agent.additionHandler'})
+for example Agent.create({'resourceCName': 'addHandler_1','resourceClass': 'addHandler'})
 
 @author: mjkoster
 '''

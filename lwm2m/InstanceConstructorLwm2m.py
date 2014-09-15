@@ -88,10 +88,9 @@ exampleConstructor = {
         'resourceClass': 'ObservableProperty', # LWM2M_Resource
         'resourceType': 'ColorLED',
         'interfaceType':'actuator',
-        'dataType':'uint32',
+        'dataType':'32_bit_hex_string_RRGGBBNN',
         'handledBy': ['handler:///Agent/BLE_ColorLED_handler']
         },
-
     }
                       
 }
