@@ -68,77 +68,29 @@ exampleConstructor = {
         'resourceName': 'services',
         'resourceClass': 'SmartObject'
         },
-    '/sensors': {
-        'resourceName': 'sensors',
-        'resourceClass': 'SmartObject'
+    '/Agent/BLE_ColorLED_Handler': {
+        'resourceName': 'BLE_ColorLED_handler',
+        'resourceClass': 'BLE_ColorLED_handler',
+        'MACaddress': 'E0:DE:F3:62:42:D7',
+        'MACtype': 'random',
+        'charHandle': '0x000b'
         },
-    '/sensors/rhvWeather-01': {
-        'resourceName': 'rhvWeather-01',
-        'resourceClass': 'SmartObject'
+    '/11100': {
+        'resourceName': '11100',
+        'resourceClass': 'SmartObject' # LWM2M_Object
         },
-    '/sensors/rhvWeather-01/outdoor_temperature': {
-        'resourceName': 'outdoor_temperature',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'temperature',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_temperature'],
+    '/11100/0': {
+        'resourceName': '0',
+        'resourceClass': 'SmartObject' # LWM2M_Instance
         },
-    '/sensors/rhvWeather-01/outdoor_humidity': {
-        'resourceName': 'outdoor_humidity',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'humidity',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/outdoor_humidity'],
-       },
-    '/sensors/rhvWeather-01/sealevel_pressure': {
-        'resourceName': 'sealevel_pressure',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'pressure',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/sealevel_pressure'],
-       },
-    '/sensors/rhvWeather-01/wind_speed': {
-        'resourceName': 'wind_speed',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'speed',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_speed'],
-       },
-    '/sensors/rhvWeather-01/wind_gust': {
-        'resourceName': 'wind_gust',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'speed',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_gust'],
-       },
-    '/sensors/rhvWeather-01/wind_direction': {
-        'resourceName': 'wind_direction',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'direction',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/wind_direction'],
-       },
-    '/sensors/rhvWeather-01/current_rain': {
-        'resourceName': 'current_rain',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'depth',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/current_rain'],
-       },
-    '/sensors/rhvWeather-01/hourly_rain': {
-        'resourceName': 'hourly_rain',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'depth',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/hourly_rain'],
-       },
-    '/sensors/rhvWeather-01/daily_rain': {
-        'resourceName': 'daily_rain',
-        'resourceClass': 'ObservableProperty',
-        'resourceType': 'depth',
-        'interfaceType':'sensor',
-        'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/daily_rain'],
-       }
+    '/11100/0/5900': {
+        'resourceName': '5900',
+        'resourceClass': 'ObservableProperty', # LWM2M_Resource
+        'resourceType': 'ColorLED',
+        'interfaceType':'actuator',
+        'dataType':'32_bit_hex_string_RRGGBBNN',
+        'handledBy': ['handler:///Agent/BLE_ColorLED_handler']
+        },
     }
                       
 }

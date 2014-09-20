@@ -1,14 +1,14 @@
 '''
 Created on Sep 15, 2012
 
-Agent classes. Contains reference to instance of class containing observer 
+Agent classes. Contains references to instances of classes containing observer 
 handlers and code 
 
 Agent Instances are created automatically. Create a named Handler instance under the Agent, 
-as an instance of the desired handler class, optionally specifying a module path setting {'classPath': '<path_to_module>'}
-by PUT (set) of a JSON object containing a dictionary of settings
+as an instance of the desired handler class, 
+by create (POST) of a JSON object containing a dictionary of settings 
 
-for example myObserver.set({'handlerClass': 'SmartObject.Agent.additionHandler'})
+for example Agent.create({'resourceCName': 'addHandler_1','resourceClass': 'addHandler'})
 
 @author: mjkoster
 '''
@@ -16,6 +16,7 @@ for example myObserver.set({'handlerClass': 'SmartObject.Agent.additionHandler'}
 
 from RESTfulResource import RESTfulResource
 from LinkFormatProxy import LinkFormatProxy
+import subprocess
 
 class Handler(RESTfulResource):   # single base class for handlers to extend directly, contains convenience methods for linking resources
     def __init__(self, parentObject=None, resourceDescriptor = {}):
@@ -82,7 +83,17 @@ class addHandler(Handler): # an example appHandler that adds two values together
 class logPrintHandler(Handler):
     def _handleNotify(self, resource) :
         print resource.Properties.get('resourceName'), ' = ', resource.get()
- 
+
+
+class BLE_ColorLED_handler(Handler):
+    def _handleNotify(self, resource = None ):
+        subprocess.call([("gatttool"),\
+                         ("--device="+self._settings['MACaddress']),\
+                         ("--addr-type="+self._settings['MACtype']),\
+                         ("--char-write"),\
+                         ("--handle="+self._settings['charHandle']),\
+                         ("--value=0x"+resource.get())])
+
 
 class Agent(RESTfulResource):
     # Agent is a container for Handlers and daemons, instantiated as a resource of a SmartObject 
