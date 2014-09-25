@@ -87,7 +87,7 @@ class logPrintHandler(Handler):
 
 class BLE_ColorLED_handler(Handler):
     def _handleNotify(self, resource = None ):
-        subprocess.call([("gatttool"),\
+        subprocess.call([("/usr/local/bin/gatttool"),\
                          ("--device="+self._settings['MACaddress']),\
                          ("--addr-type="+self._settings['MACtype']),\
                          ("--char-write"),\

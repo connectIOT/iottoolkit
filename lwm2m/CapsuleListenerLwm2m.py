@@ -1,12 +1,12 @@
 '''
-Created on Dec 12, 2013
+Created on Sept 22, 2014
 
-Create services from a service model instance, create objects from an object model instance 
-How are base objects mapped to services? 
-This file creates a service object that has multiple services and a single object tree
-There could be a service creation service where POSTing this descriptor would build objects 
-and create service instance, and this will be built as function sets, probably part of 
-Resource Directory (RD)
+System Constructor for resource stub representing the Nespresso Capsule Type String
+
+An agent listens on a socket and discovers the capsule type from the output of Barista
+
+The Agent sets the resource value of 11101/0/5001 Capsule Type Resource to the current type
+
 
 @author: mjkoster
 '''
@@ -19,6 +19,9 @@ from time import sleep
 from urlparse import urlparse
 import subprocess
 import rdflib
+import websocket
+import json
+
 
 #workaround to register rdf JSON plugins 
 from rdflib.plugin import Serializer, Parser
@@ -68,8 +71,30 @@ exampleConstructor = {
         'resourceName': 'services',
         'resourceClass': 'SmartObject'
         },
-     '/11100': {
+     '/11101': {
         'resourceName': '11101',
+        'resourceClass': 'SmartObject' # LWM2M_Object
+        },
+    '/11101/0': {
+        'resourceName': '0',
+        'resourceClass': 'SmartObject' # LWM2M_Instance
+        },
+    '/11101/0/5001': {
+        'resourceName': '5001',
+        'resourceClass': 'ObservableProperty', # LWM2M_Resource
+        'resourceType': 'CapsuleID',
+        'interfaceType':'sensor',
+        'dataType':'string',
+        },
+    '/Agent/BLE_ColorLED_Handler': {
+        'resourceName': 'BLE_ColorLED_handler',
+        'resourceClass': 'BLE_ColorLED_handler',
+        'MACaddress': 'E0:DE:F3:62:42:D7',
+        'MACtype': 'random',
+        'charHandle': '0x000b'
+        },
+    '/11100': {
+        'resourceName': '11100',
         'resourceClass': 'SmartObject' # LWM2M_Object
         },
     '/11100/0': {
@@ -77,11 +102,13 @@ exampleConstructor = {
         'resourceClass': 'SmartObject' # LWM2M_Instance
         },
     '/11100/0/5900': {
-        'resourceName': '5001',
+        'resourceName': '5900',
         'resourceClass': 'ObservableProperty', # LWM2M_Resource
-        'resourceType': 'CapsuleID',
-        'interfaceType':'sensor',
-        'dataType':'string',
+        'resourceType': 'ColorLED',
+        'interfaceType':'actuator',
+        'dataType':'32_bit_hex_string_RRGGBBNN',
+        'publishesTo':['http://192.168.1.200:8000/11100/0/5900']
+        #'handledBy': ['handler:///Agent/BLE_ColorLED_handler']
         },
     }
                       
@@ -201,8 +228,8 @@ class SystemInstance(object):
             self._newService = ServiceObject(self._serviceName, self._services[self._serviceName], self._baseObject)
             self._serviceRegistry.resources.update({self._serviceName:self._newService})
             self._serviceDescription.set(self._graphFromModel(self._serviceName, self._services[self._serviceName]))
-            
-            
+
+                
     def _graphFromModel(self, link, meta):
         # make rdf-json from the model and return RDF graph for loading into Description
         g=rdflib.Graph()
@@ -305,11 +332,49 @@ if __name__ == '__main__' :
     make an instance using the example constructor
     '''
     system = SystemInstance(exampleConstructor)
+
+    def capsule2color(capsuleType):
+        colorTable = {
+        'kazaar':'00002000',
+        'dharkan':'00303000',
+        'ristretto':'20201000',
+        'arpeggio':'20003000',
+        'roma':'30302000',
+        'livanto':'40100000',
+        'capriccio':'00401000',
+        'volluto':'50200000',
+        'decaffeinato_intenso':'30101000',
+        'vivalto_lungo':'10104000'              
+        }
+        return colorTable[capsuleType]
     
+    def processPayload(payload):
+        payload = json.loads(payload)
+        if payload.has_key('currentCapsule'):
+            #print payload['currentCapsule']
+            system._objectFromPath('/11101/0/5001', system._baseObject).set(payload['currentCapsule'])
+            system._objectFromPath('/11100/0/5900', system._baseObject).set(capsule2color(payload['currentCapsule']))
+           
+    ws = websocket.WebSocket()
+    ws.connect('ws://localhost:4001/ws')
+    print 'connected'
+    try:
+        while 1:
+            payload = ws.recv()
+            processPayload(payload)
+    except KeyboardInterrupt: pass
+    print 'got KeyboardInterrupt'
+    ws.close()
+    print 'closed'
+    
+    def processPayload(payload):
+        pass
+"""  
     try:
     # register handlers etc.
         while 1: sleep(1)
     except KeyboardInterrupt: pass
     print 'got KeyboardInterrupt'
+"""
 
     
