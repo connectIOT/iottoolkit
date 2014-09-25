@@ -125,11 +125,19 @@ class httpSubscriber(Observer):
         # create the named resource for the Observer
         self._httpConnection.request('POST', self._uriObject.path + '/Observers', \
                                      json.dumps(self._observerDescriptor), self._jsonHeader)
-        self._httpConnection.getresponse()
+        #self._httpConnection.getresponse()
+        self._response = self._httpConnection.getresponse()
+        self._status = self._response.status
+        self._body = self._response.read()
+        print "Remote Observer Create status: ", self._status
         # configure the Observer
         self._httpConnection.request('PUT', self._uriObject.path + '/Observers' + '/' + self._observerName, \
                                      json.dumps(self._observerSettings), self._jsonHeader)
-        self._httpConnection.getresponse()
+        #self._httpConnection.getresponse()
+        self._response = self._httpConnection.getresponse()
+        self._status = self._response.status
+        self._body = self._response.read()
+        print "Remote Observer Config status: ", self._status
         return
     
     
