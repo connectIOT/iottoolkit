@@ -162,6 +162,10 @@ class xivelyPublisher(Observer):
             self._httpConnection = httplib.HTTPConnection(self._uriObject.netloc)
             self._httpConnection.request('PUT', self._uriObject.path, json.dumps(self._requestBody), self._requestHeader )
             self._httpConnection.getresponse()
+            self._response = self._httpConnection.getresponse()
+            self._status = self._response.status
+            self._body = self._response.read()
+            print "Xively publish status: ", self._status
   
   
 class mqttObserver(Observer):
@@ -283,11 +287,11 @@ class coapNotifier(Observer):
         pass
     
     def _notify(self, resource):
-        # send a 200 response to the client
+        # send a 2.00 response to the client
         pass
     
     def delete(self):
-        # send 400 response and remove resources
+        # send 2.02 response and remove resources
         pass
 
 

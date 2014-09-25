@@ -335,28 +335,29 @@ if __name__ == '__main__' :
 
     def capsule2color(capsuleType):
         colorTable = {
-        'kazaar':'00002000',
-        'dharkan':'00303000',
-        'ristretto':'20201000',
+        'kazaar':'00005000',
+        'dharkan':'00404000',
+        'ristretto':'18181000',
         'arpeggio':'20003000',
         'roma':'30302000',
         'livanto':'40100000',
-        'capriccio':'00401000',
-        'volluto':'50200000',
-        'decaffeinato_intenso':'30101000',
-        'vivalto_lungo':'10104000'              
+        'capriccio':'00300000',
+        'volluto':'50300000',
+        'decaffeinato_intenso':'30001800',
+        'vivalto_lungo':'20204000'              
         }
         return colorTable[capsuleType]
     
     def processPayload(payload):
         payload = json.loads(payload)
         if payload.has_key('currentCapsule'):
-            #print payload['currentCapsule']
+            print payload['currentCapsule']
             system._objectFromPath('/11101/0/5001', system._baseObject).set(payload['currentCapsule'])
             system._objectFromPath('/11100/0/5900', system._baseObject).set(capsule2color(payload['currentCapsule']))
            
     ws = websocket.WebSocket()
     ws.connect('ws://localhost:4001/ws')
+    #ws.connect('ws://barista.cloudapp.net:4001/ws')
     print 'connected'
     try:
         while 1:
