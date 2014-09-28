@@ -355,19 +355,20 @@ if __name__ == '__main__' :
         response = httpConnection.getresponse()
         print response.status, response.reason
         if response.status == 200:
-            endpoints = response.read()
+            endpoints = json.loads(response.read())
         httpConnection.close()
-    
+            
         return endpoints
 
     
     def discoverLEDresources(endpoints):
         for endpoint in endpoints:
-            if endpoint['type'] == 'LED_STRIP':
+            if endpoint['type'] == 'mbed_device':
                 ep_names.append(endpoint['name'])
+        print ep_names        
         return ep_names
 
-    def actuate_LEDs(ep_names,color):
+    def actuateLEDs(ep_names,color):
         jsonObject = json.dumps(color)
         for ep in ep_names:
             path = basePath + ep + '/11100/0/5900?sync=true'
@@ -376,9 +377,8 @@ if __name__ == '__main__' :
             httpConnection.request('PUT',   uriObject.path, jsonObject, \
                                      {"Content-Type" : "application/json", "Authorization": ("Basic %s" % auth)})
             response = httpConnection.getresponse()
-            print response.status,    response.reason
+            print response.status, response.reason
             httpConnection.close()
-
     
     
     def capsule2color(capsuleType):
@@ -400,16 +400,18 @@ if __name__ == '__main__' :
         payload = json.loads(payload)
         if payload.has_key('currentCapsule'):
             print payload['currentCapsule']
-            system._objectFromPath('/11101/0/5001', system._baseObject).set(payload['currentCapsule'])
-            system._objectFromPath('/11100/0/5900', system._baseObject).set(capsule2color(payload['currentCapsule']))
+            actuateLEDs(ep_names, capsule2color(payload['currentCapsule']))
             
-           
+            #system._objectFromPath('/11101/0/5001', system._baseObject).set(payload['currentCapsule'])
+            #system._objectFromPath('/11100/0/5900', system._baseObject).set(capsule2color(payload['currentCapsule']))
+            
     """
     Start
     """
-    system = SystemInstance(exampleConstructor)
+    print "Started"
+    #system = SystemInstance(exampleConstructor)
 
-    print discoverEndpoints(basePath)
+    ep_names = discoverLEDresources(discoverEndpoints(basePath))
            
     ws = websocket.WebSocket()
     ws.connect('ws://localhost:4001/ws')
