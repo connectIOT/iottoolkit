@@ -1,36 +1,30 @@
 '''
-Created on Sept 22, 2014
+Created on Sept 26, 2014
 
 An agent listens on a socket and discovers the capsule type from the output of Barista
 
 The Agent sets the resource value of 11101/0/5900 Capsule Type Resource to the current type
 
-
 @author: mjkoster
 '''
-
-from time import sleep
-from urlparse import urlparse
-import subprocess
-import websocket
-import json
 
 if __name__ == '__main__' :
     
     import httplib
+    import websocket
     import json
     from urlparse import urlparse
     import base64
     
-    httpServer = 'http://barista.cloudapp.net:8080'
+    #httpServer = 'http://barista.cloudapp.net:8080'
+    httpServer = 'http://192.168.1.200:8080'
     httpPathBase = '/domain/endpoints'
     basePath = httpServer + httpPathBase
     username = 'admin'
     password = 'secret'
     auth = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
     ep_names = []
-
-    
+ 
     def discoverEndpoints(basePath):
         uriObject = urlparse(basePath)
         httpConnection = httplib.HTTPConnection(uriObject.netloc)
@@ -44,28 +38,24 @@ if __name__ == '__main__' :
         httpConnection.close()
             
         return endpoints
-
-    
+   
     def discoverLEDresources(endpoints):
         for endpoint in endpoints:
-            if endpoint['type'] == 'mbed_device':
+            if endpoint['type'] == 'LED-STRIP':
                 ep_names.append(endpoint['name'])
-        print ep_names        
         return ep_names
 
     def actuateLEDs(ep_names,color):
-        jsonObject = json.dumps(color)
         for ep in ep_names:
-            path = basePath + '/' + ep + '/11100/0/5900?sync=true'
-            print path
+            path = basePath + '/' + ep + '/11100/0/5900?sync=false'
+            print "PUT: " + color + '  to: ' + path
             uriObject = urlparse(path)
             httpConnection = httplib.HTTPConnection(uriObject.netloc)
-            httpConnection.request('PUT',   uriObject.path, jsonObject, \
+            httpConnection.request('PUT',   uriObject.path + '?' + uriObject.query, color, \
                                      {"Content-Type" : "application/json", "Authorization": ("Basic %s" % auth)})
             response = httpConnection.getresponse()
             print response.status, response.reason
             httpConnection.close()
-    
     
     def capsule2color(capsuleType):
         colorTable = {
@@ -87,10 +77,7 @@ if __name__ == '__main__' :
         if payload.has_key('currentCapsule'):
             print payload['currentCapsule']
             actuateLEDs(ep_names, capsule2color(payload['currentCapsule']))
-            
-            #system._objectFromPath('/11101/0/5001', system._baseObject).set(payload['currentCapsule'])
-            #system._objectFromPath('/11100/0/5900', system._baseObject).set(capsule2color(payload['currentCapsule']))
-            
+                        
     """
     Start
     """
