@@ -107,7 +107,8 @@ exampleConstructor = {
         'resourceType': 'ColorLED',
         'interfaceType':'actuator',
         'dataType':'32_bit_hex_string_RRGGBBNN',
-        'publishesTo':['http://192.168.1.200:8000/11100/0/5900']
+        'publishesTo':['http://barista.cloudapp.net:8080/domain/endpoints/LED-booth-10-0-0-44/11100/0/5900?sync=true']
+        #'publishesTo':['http://192.168.1.200:8000/11100/0/5900']
         #'handledBy': ['handler:///Agent/BLE_ColorLED_handler']
         },
     }
@@ -155,7 +156,9 @@ class SystemInstance(object):
         self._httpPublisherTemplate = {
                                        'resourceName': 'httpPublisher',
                                        'resourceClass': 'httpPublisher',
-                                       'targetURI': 'http://localhost:8000/'
+                                       'targetURI': 'http://localhost:8000/',
+                                       'username': 'admin',
+                                       'password': 'secret'
                                        }
         
         self._httpSubscriberTemplate = {
@@ -328,11 +331,56 @@ class ServiceObject(RESTfulResource):
 
 
 if __name__ == '__main__' :
-    '''
-    make an instance using the example constructor
-    '''
-    system = SystemInstance(exampleConstructor)
+    
+    import httplib
+    import json
+    from urlparse import urlparse
+    import base64
+    
+    httpServer = 'http://barista.cloudapp.net:8080'
+    httpPathBase = '/domain/endpoints'
+    basePath = httpServer + httpPathBase
+    username = 'admin'
+    password = 'secret'
+    auth = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    ep_names = []
 
+    
+    def discoverEndpoints(basePath):
+        uriObject = urlparse(basePath)
+        httpConnection = httplib.HTTPConnection(uriObject.netloc)
+        httpConnection.request('GET', uriObject.path, headers= \
+                           {"Accept" : "application/json", "Authorization": ("Basic %s" % auth) })
+    
+        response = httpConnection.getresponse()
+        print response.status, response.reason
+        if response.status == 200:
+            endpoints = response.read()
+        httpConnection.close()
+    
+        return endpoints
+
+    
+    def discoverLEDresources(endpoints):
+        for endpoint in endpoints:
+            if endpoint['type'] == 'LED_STRIP':
+                ep_names.append(endpoint['name'])
+        return ep_names
+
+    def actuate_LEDs(ep_names,color):
+        jsonObject = json.dumps(color)
+        for ep in ep_names:
+            path = basePath + ep + '/11100/0/5900?sync=true'
+            uriObject = urlparse(path)
+            httpConnection = httplib.HTTPConnection(uriObject.netloc)
+            httpConnection.request('PUT',   uriObject.path, jsonObject, \
+                                     {"Content-Type" : "application/json", "Authorization": ("Basic %s" % auth)})
+            response = httpConnection.getresponse()
+            print response.status,    response.reason
+            httpConnection.close()
+
+    
+    
     def capsule2color(capsuleType):
         colorTable = {
         'kazaar':'00005000',
@@ -354,28 +402,25 @@ if __name__ == '__main__' :
             print payload['currentCapsule']
             system._objectFromPath('/11101/0/5001', system._baseObject).set(payload['currentCapsule'])
             system._objectFromPath('/11100/0/5900', system._baseObject).set(capsule2color(payload['currentCapsule']))
+            
+           
+    """
+    Start
+    """
+    system = SystemInstance(exampleConstructor)
+
+    print discoverEndpoints(basePath)
            
     ws = websocket.WebSocket()
     ws.connect('ws://localhost:4001/ws')
     #ws.connect('ws://barista.cloudapp.net:4001/ws')
-    print 'connected'
+    print 'ws connected'
     try:
         while 1:
-            payload = ws.recv()
-            processPayload(payload)
+            processPayload(ws.recv())
     except KeyboardInterrupt: pass
     print 'got KeyboardInterrupt'
     ws.close()
     print 'closed'
     
-    def processPayload(payload):
-        pass
-"""  
-    try:
-    # register handlers etc.
-        while 1: sleep(1)
-    except KeyboardInterrupt: pass
-    print 'got KeyboardInterrupt'
-"""
-
     
