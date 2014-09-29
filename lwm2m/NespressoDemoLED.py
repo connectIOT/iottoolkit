@@ -50,7 +50,7 @@ if __name__ == '__main__' :
         return ep_names
                
 
-    def actuateLEDs(ep_names,color):
+    def actuateLEDs(color):
         for ep in ep_names:
             path = basePath + '/' + ep + '/11100/0/5900?noResp=true'
             print "PUT: " + color + '  to: ' + path
@@ -83,14 +83,15 @@ if __name__ == '__main__' :
         payload = json.loads(payload)
         if payload.has_key('currentCapsule'):
             print payload['currentCapsule']
-            actuateLEDs(ep_names, capsule2color(payload['currentCapsule']))
+            actuateLEDs(capsule2color(payload['currentCapsule']))
                         
     """
     Start
     """
     print "Started"
 
-    ep_names = discoverEndpoints(basePath)
+    discoverEndpoints(basePath)
+    
     ws = websocket.WebSocket()
     ws.connect(baristaServer)
     print 'ws connected'
