@@ -1,9 +1,15 @@
 '''
 Created on Sept 26, 2014
 
-An agent listens on a socket and discovers the capsule type from the output of Barista
+An agent discovers instances of LED controller endpoints registered with mbed Device Server 
 
-The Agent sets the resource value of 11101/0/5900 Capsule Type Resource to the current type
+The agent listens on a socket to the dynamic web content of barista
+
+A handler discovers capsule types from the output of Barista and 
+looks up the appropriate color value for the capsule type
+
+The actuation handler sets all 11101/0/5900 LED Strip Resources to the 
+corresponding color value
 
 @author: mjkoster
 '''
@@ -16,6 +22,8 @@ if __name__ == '__main__' :
     from urlparse import urlparse
     import base64
     
+    baristaServer = 'ws://localhost:4001/ws'
+    #baristaServer = 'ws://barista.cloudapp.net:4001/ws'
     httpServer = 'http://barista.cloudapp.net:8080'
     #httpServer = 'http://192.168.1.200:8080'
     httpPathBase = '/domain/endpoints'
@@ -81,13 +89,10 @@ if __name__ == '__main__' :
     Start
     """
     print "Started"
-    #system = SystemInstance(exampleConstructor)
 
     ep_names = discoverEndpoints(basePath)
-           
     ws = websocket.WebSocket()
-    ws.connect('ws://localhost:4001/ws')
-    #ws.connect('ws://barista.cloudapp.net:4001/ws')
+    ws.connect(baristaServer)
     print 'ws connected'
     try:
         while 1:
