@@ -79,12 +79,6 @@ if __name__ == '__main__' :
         return colorTable[capsuleType]
 
     
-    def processPayload(payload):
-        payload = json.loads(payload)
-        if payload.has_key('currentCapsule'):
-            print payload['currentCapsule']
-            actuateLEDs(capsule2color(payload['currentCapsule']))
-                        
     """
     Start
     """
@@ -97,7 +91,11 @@ if __name__ == '__main__' :
     print 'ws connected'
     try:
         while 1:
-            processPayload(ws.recv())
+            payload = json.loads(ws.recv()) 
+            if payload.has_key('currentCapsule'):
+                print payload['currentCapsule']
+                actuateLEDs(capsule2color(payload['currentCapsule']))
+            
     except KeyboardInterrupt: pass
     print 'got KeyboardInterrupt'
     ws.close()
