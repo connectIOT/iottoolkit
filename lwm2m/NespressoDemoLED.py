@@ -16,8 +16,8 @@ if __name__ == '__main__' :
     from urlparse import urlparse
     import base64
     
-    #httpServer = 'http://barista.cloudapp.net:8080'
-    httpServer = 'http://192.168.1.200:8080'
+    httpServer = 'http://barista.cloudapp.net:8080'
+    #httpServer = 'http://192.168.1.200:8080'
     httpPathBase = '/domain/endpoints'
     basePath = httpServer + httpPathBase
     username = 'admin'
@@ -30,24 +30,21 @@ if __name__ == '__main__' :
         httpConnection = httplib.HTTPConnection(uriObject.netloc)
         httpConnection.request('GET', uriObject.path, headers= \
                            {"Accept" : "application/json", "Authorization": ("Basic %s" % auth) })
-    
         response = httpConnection.getresponse()
         print response.status, response.reason
         if response.status == 200:
             endpoints = json.loads(response.read())
         httpConnection.close()
-            
-        return endpoints
-   
-    def discoverLEDresources(endpoints):
+        
         for endpoint in endpoints:
             if endpoint['type'] == 'LED-STRIP':
                 ep_names.append(endpoint['name'])
         return ep_names
+               
 
     def actuateLEDs(ep_names,color):
         for ep in ep_names:
-            path = basePath + '/' + ep + '/11100/0/5900?sync=false'
+            path = basePath + '/' + ep + '/11100/0/5900?noResp=true'
             print "PUT: " + color + '  to: ' + path
             uriObject = urlparse(path)
             httpConnection = httplib.HTTPConnection(uriObject.netloc)
@@ -56,6 +53,7 @@ if __name__ == '__main__' :
             response = httpConnection.getresponse()
             print response.status, response.reason
             httpConnection.close()
+
     
     def capsule2color(capsuleType):
         colorTable = {
@@ -71,6 +69,7 @@ if __name__ == '__main__' :
         'vivalto_lungo':'20204000'              
         }
         return colorTable[capsuleType]
+
     
     def processPayload(payload):
         payload = json.loads(payload)
@@ -84,7 +83,7 @@ if __name__ == '__main__' :
     print "Started"
     #system = SystemInstance(exampleConstructor)
 
-    ep_names = discoverLEDresources(discoverEndpoints(basePath))
+    ep_names = discoverEndpoints(basePath)
            
     ws = websocket.WebSocket()
     ws.connect('ws://localhost:4001/ws')
