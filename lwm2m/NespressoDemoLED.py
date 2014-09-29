@@ -27,7 +27,7 @@ if __name__ == '__main__' :
     httpServer = 'http://barista.cloudapp.net:8080'
     #httpServer = 'http://192.168.1.200:8080'
     httpPathBase = '/domain/endpoints'
-    basePath = httpServer + httpPathBase
+    baseURL = httpServer + httpPathBase
     username = 'admin'
     password = 'secret'
     auth = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
@@ -52,7 +52,7 @@ if __name__ == '__main__' :
 
     def actuateLEDs(color):
         for ep in ep_names:
-            path = basePath + '/' + ep + '/11100/0/5900?noResp=true'
+            path = baseURL + '/' + ep + '/11100/0/5900?noResp=true'
             print "PUT: " + color + '  to: ' + path
             uriObject = urlparse(path)
             httpConnection = httplib.HTTPConnection(uriObject.netloc)
@@ -90,7 +90,7 @@ if __name__ == '__main__' :
     """
     print "Started"
 
-    discoverEndpoints(basePath)
+    discoverEndpoints(baseURL)
     
     ws = websocket.WebSocket()
     ws.connect(baristaServer)
