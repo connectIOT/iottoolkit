@@ -1,8 +1,11 @@
 '''
 Created on October 25th, 2014
 
-Subscribe to a resource and connect to the notification channel of an mDS instance and receive 
+Subscribe to a resource, connect to the notification channel of an mDS instance and receive 
 notifications from the subscribed resource
+
+Process the notifications and filter a set of endpints and a particualr resource path. Index the 
+resource value from the notification and use it to actuate an indicator.
 
 @author: mjkoster
 '''
@@ -17,8 +20,8 @@ if __name__ == '__main__' :
     httpServer = 'http://barista2.cloudapp.net:8080'
     httpDomain = 'domain'
     resourcePathBase = '/' + httpDomain + '/endpoints'
-    subscribeURI = '3302/0/5500'
-    actuateURI = '11101/0/5901'
+    subscribeURI = '/3302/0/5500'
+    actuateURI = '/11101/0/5901'
     baseURL = httpServer + resourcePathBase
     
     username = 'admin'
@@ -28,7 +31,7 @@ if __name__ == '__main__' :
  
     def discoverEndpoints(basePath):
         uriObject = urlparse(basePath)
-        print 'discover: ' + basePath
+        print 'discoverEP : ' + basePath
         httpConnection = httplib.HTTPConnection(uriObject.netloc)
         httpConnection.request('GET', uriObject.path, headers= \
                            {"Accept" : "application/json", "Authorization": ("Basic %s" % auth) })
@@ -39,14 +42,32 @@ if __name__ == '__main__' :
         httpConnection.close()
         
         for endpoint in endpoints:
-            if endpoint['type'] == 'presenceDemo':
+            if endpoint['type'] == 'DEMO' and discoverResources(endpoint['name'], subscribeURI):
                 ep_names.append(endpoint['name'])
                 print 'endpoint: ' + endpoint['name']
         return ep_names
 
+    def discoverResources(endpoint, uri_path):
+        uriObject = urlparse(baseURL + '/' + endpoint)
+        print 'discoverRES : ' + endpoint
+        httpConnection = httplib.HTTPConnection(uriObject.netloc)
+        httpConnection.request('GET', uriObject.path, headers= \
+                           {"Accept" : "application/json", "Authorization": ("Basic %s" % auth) })
+        response = httpConnection.getresponse()
+        print response.status, response.reason
+        if response.status == 200:
+            resources = json.loads(response.read())
+        httpConnection.close()
+        
+        for resource in resources:
+            if resource['uri'] == uri_path:
+                print 'resource: ' + resource['uri']
+                return resource['uri']
+        return 0
+
     def subscribe(resourceURI):
         for ep in ep_names:
-            path = httpServer + '/' + httpDomain + '/subscriptions' + '/' + ep + '/' + subscribeURI + '?sync=false'
+            path = httpServer + '/' + httpDomain + '/subscriptions' + '/' + ep + subscribeURI + '?sync=true'
             print "subscribe: " + path
             uriObject = urlparse(path)
             httpConnection = httplib.HTTPConnection(uriObject.netloc)
@@ -57,6 +78,7 @@ if __name__ == '__main__' :
             httpConnection.close()
 
     def poll(channelPath):
+        print 'poll: ' + channelPath
         uriObject = urlparse(channelPath)
         httpConnection = httplib.HTTPConnection(uriObject.netloc)
         httpConnection.request('GET', uriObject.path, headers= \
@@ -64,13 +86,17 @@ if __name__ == '__main__' :
         response = httpConnection.getresponse()
         print response.status, response.reason
         if response.status == 200:
-            return json.loads(response.read())
-        print "Closing poll connection"
+            payload = response.read()
+            httpConnection.close()
+            if len(payload) > 0:
+                return json.loads(payload)
         httpConnection.close()
+        return 0
 
     def actuateLEDbar(ledString = '0000000000'):
         for ep in ep_names:
-            path = baseURL + ep + actuateURI
+            path = baseURL + '/' + ep + actuateURI
+            print "actuating: " + path + ", value=" + ledString
             uriObject = urlparse(path)
             httpConnection = httplib.HTTPConnection(uriObject.netloc)
             httpConnection.request('PUT',   uriObject.path + '?' + uriObject.query, ledString, \
@@ -81,9 +107,10 @@ if __name__ == '__main__' :
     
     def process_notification(notification):
         value =  base64.b64decode(notification['payload']) #notification payloads are base64 encoded
+        print "value: ", value
         ledBarString = ""
         for led in range(10):
-            if value/10 > led:
+            if float(value)/10 > led:
                 ledBarString += '1'
             else:
                 ledBarString += '0'
@@ -99,11 +126,10 @@ if __name__ == '__main__' :
     
     try:
         while 1:
-            domainEvents = poll(httpServer + '/' + httpDomain + 'notification/pull')
-            print domainEvents
-            if 'notifications' in domainEvents:
+            domainEvents = poll(httpServer + '/' + httpDomain + '/notification/pull')
+            if domainEvents != 0 and 'notifications' in domainEvents:
                 for notification in domainEvents['notifications']:
-                    if notification['ep'] in ep_names and notification['path'] == subscribeURI:
+                    if (notification['ep'] in ep_names) and (notification['path'] == subscribeURI):
                         process_notification(notification)
             
     except KeyboardInterrupt: pass
