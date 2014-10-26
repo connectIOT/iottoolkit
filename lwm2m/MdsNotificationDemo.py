@@ -77,22 +77,37 @@ if __name__ == '__main__' :
             print response.status, response.reason
             httpConnection.close()
 
-    def poll(channelPath):
+    def longPoll(channelPath):
         print 'poll: ' + channelPath
         uriObject = urlparse(channelPath)
         httpConnection = httplib.HTTPConnection(uriObject.netloc)
-        httpConnection.request('GET', uriObject.path, headers= \
+        while 1:
+            httpConnection.request('GET', uriObject.path, headers= \
                            {"Accept" : "application/json", "Authorization": ("Basic %s" % auth) })
-        response = httpConnection.getresponse()
-        print response.status, response.reason
-        if response.status == 200:
-            payload = response.read()
-            httpConnection.close()
-            if len(payload) > 0:
-                return json.loads(payload)
-        httpConnection.close()
-        return 0
+            response = httpConnection.getresponse()
+            print response.status, response.reason
+            if response.status == 200:
+                httpBody = response.read()
+                if len(httpBody) > 0:
+                    handleEvents(json.loads(httpBody))
 
+    def handleEvents(events):
+        if 'notifications' in events:
+            for notification in events['notifications']:
+                if (notification['ep'] in ep_names) and (notification['path'] == subscribeURI):
+                    process_payload(notification)
+                
+    def process_payload(notification):
+        value =  base64.b64decode(notification['payload']) #notification payloads are base64 encoded
+        print "value: ", value
+        ledBarString = ""
+        for led in range(10):
+            if float(value)/10 > led:
+                ledBarString += '1'
+            else:
+                ledBarString += '0'
+        actuateLEDbar(ledBarString)
+        
     def actuateLEDbar(ledString = '0000000000'):
         for ep in ep_names:
             path = baseURL + '/' + ep + actuateURI
@@ -104,17 +119,6 @@ if __name__ == '__main__' :
             response = httpConnection.getresponse()
             print response.status, response.reason
             httpConnection.close()    
-    
-    def process_notification(notification):
-        value =  base64.b64decode(notification['payload']) #notification payloads are base64 encoded
-        print "value: ", value
-        ledBarString = ""
-        for led in range(10):
-            if float(value)/10 > led:
-                ledBarString += '1'
-            else:
-                ledBarString += '0'
-        actuateLEDbar(ledBarString)
                 
     """
     Start
@@ -125,13 +129,8 @@ if __name__ == '__main__' :
     subscribe(subscribeURI)
     
     try:
-        while 1:
-            domainEvents = poll(httpServer + '/' + httpDomain + '/notification/pull')
-            if domainEvents != 0 and 'notifications' in domainEvents:
-                for notification in domainEvents['notifications']:
-                    if (notification['ep'] in ep_names) and (notification['path'] == subscribeURI):
-                        process_notification(notification)
-            
+        longPoll(httpServer + '/' + httpDomain + '/notification/pull')
+        
     except KeyboardInterrupt: pass
     print 'got KeyboardInterrupt'
     print 'closed'
