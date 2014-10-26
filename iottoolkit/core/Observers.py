@@ -26,6 +26,7 @@ from urlparse import urlparse
 import json
 import httplib
 import mosquitto # should try and catch exception if mosquitto not installed    
+import base64
 
 
 class Observer(RESTfulResource):
@@ -73,12 +74,26 @@ class Observer(RESTfulResource):
 
 
 class httpPublisher(Observer):
+    def _init(self):
+        
+        self._username = ""
+        self._password = ""
+        if self._settings.has_key('username'):
+            self._username = self._settings['username']
+            self._password = self._settings['password']
+        self._auth = base64.encodestring('%s:%s' % (self._username, self._password)).replace('\n', '')
+        
+        pass
     def _notify(self,resource): # JSON only for now
         self._jsonObject = json.dumps(resource.get())
         self._uriObject = urlparse(self._settings['targetURI'])
         self._httpConnection = httplib.HTTPConnection(self._uriObject.netloc)
-        self._httpConnection.request('PUT', self._uriObject.path, self._jsonObject, {"Content-Type" : "application/json" })
-        self._httpConnection.getresponse()
+        self._httpConnection.request('PUT', self._uriObject.path, self._jsonObject, \
+                                     {"Content-Type" : "application/json", "Authorization": ("Basic %s" % self._auth)})
+        #self._httpConnection.getresponse()
+        self._response = self._httpConnection.getresponse()
+        print self._response.status, self._response.reason
+        self._httpConnection.close()
         return
 
 
@@ -121,11 +136,15 @@ class httpSubscriber(Observer):
         # create the named resource for the Observer
         self._httpConnection.request('POST', self._uriObject.path + '/Observers', \
                                      json.dumps(self._observerDescriptor), self._jsonHeader)
-        self._httpConnection.getresponse()
+        #self._httpConnection.getresponse()
+        self._response = self._httpConnection.getresponse()
+        print self._response.status, self._response.reason
         # configure the Observer
         self._httpConnection.request('PUT', self._uriObject.path + '/Observers' + '/' + self._observerName, \
                                      json.dumps(self._observerSettings), self._jsonHeader)
-        self._httpConnection.getresponse()
+        #self._httpConnection.getresponse()
+        self._response = self._httpConnection.getresponse()
+        print self._response.status, self._response.reason
         return
     
     
@@ -149,7 +168,9 @@ class xivelyPublisher(Observer):
             self._streamBody.update({'current_value': resource.get() })
             self._httpConnection = httplib.HTTPConnection(self._uriObject.netloc)
             self._httpConnection.request('PUT', self._uriObject.path, json.dumps(self._requestBody), self._requestHeader )
-            self._httpConnection.getresponse()
+            #self._httpConnection.getresponse()
+            self._response = self._httpConnection.getresponse()
+            print self._response.status, self._response.reason
   
   
 class mqttObserver(Observer):
@@ -271,11 +292,11 @@ class coapNotifier(Observer):
         pass
     
     def _notify(self, resource):
-        # send a 200 response to the client
+        # send a 2.00 response to the client
         pass
     
     def delete(self):
-        # send 400 response and remove resources
+        # send 2.02 response and remove resources
         pass
 
 
