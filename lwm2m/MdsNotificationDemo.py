@@ -48,6 +48,7 @@ if __name__ == '__main__' :
         return ep_names
 
     def discoverResources(endpoint, uri_path):
+        resources = []
         uriObject = urlparse(baseURL + '/' + endpoint)
         print 'discoverRES : ' + endpoint
         httpConnection = httplib.HTTPConnection(uriObject.netloc)
@@ -63,7 +64,8 @@ if __name__ == '__main__' :
             if resource['uri'] == uri_path:
                 print 'resource: ' + resource['uri']
                 return resource['uri']
-        return 0
+            else:
+                return 0
 
     def subscribe(resourceURI):
         for ep in ep_names:
@@ -89,9 +91,9 @@ if __name__ == '__main__' :
             if response.status == 200:
                 httpBody = response.read()
                 if len(httpBody) > 0:
-                    handleEvents(json.loads(httpBody))
+                    handleNotifications(json.loads(httpBody))
 
-    def handleEvents(events):
+    def handleNotifications(events):
         if 'notifications' in events:
             for notification in events['notifications']:
                 if (notification['ep'] in ep_names) and (notification['path'] == subscribeURI):
@@ -126,6 +128,7 @@ if __name__ == '__main__' :
     print "Started"
 
     discoverEndpoints(baseURL)
+    
     subscribe(subscribeURI)
     
     try:
