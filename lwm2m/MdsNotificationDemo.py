@@ -4,7 +4,7 @@ Created on October 25th, 2014
 Subscribe to a resource, connect to the notification channel of an mDS instance and receive 
 notifications from the subscribed resource
 
-Process the notifications and filter a set of endpints and a particualr resource path. Index the 
+Process the notifications and filter a set of endpoints and a particular resource path. Index the 
 resource value from the notification and use it to actuate an indicator.
 
 @author: mjkoster
@@ -21,10 +21,11 @@ if __name__ == '__main__' :
     httpDomain = 'domain'
     resourcePathBase = '/' + httpDomain + '/endpoints'
     subscribeURI = '/3302/0/5500'
-    actuateURI = '/11101/0/5901'
+    #actuateURI = '/11101/0/5901'
+    actuateURI = '/11100/0/5900' # use the chainable LED or LED strip
     baseURL = httpServer + resourcePathBase
     
-    username = 'admin'
+    username = 'connected-home'
     password = 'secret'
     auth = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
     ep_names = []
@@ -102,15 +103,21 @@ if __name__ == '__main__' :
     def process_payload(notification):
         value =  base64.b64decode(notification['payload']) #notification payloads are base64 encoded
         print "value: ", value
-        ledBarString = ""
+        """
+        ledString = ""
         for led in range(10):
             if float(value)/10 > led:
-                ledBarString += '1'
+                ledString += '1'
             else:
-                ledBarString += '0'
-        actuateLEDbar(ledBarString)
+                ledString += '0'
+        actuateLED(ledString)
+        """
+        if value == '1':
+            actuateLED('FF000000')
+        else:
+            actuateLED('00000000')
         
-    def actuateLEDbar(ledString = '0000000000'):
+    def actuateLED(ledString = ''):
         for ep in ep_names:
             path = baseURL + '/' + ep + actuateURI
             print "actuating: " + path + ", value=" + ledString
