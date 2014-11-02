@@ -17,7 +17,7 @@ if __name__ == '__main__' :
     from urlparse import urlparse
     import base64
     
-    httpServer = 'http://barista2.cloudapp.net:8080'
+    httpServer = 'http://smartobjectservice.com:8080'
     httpDomain = 'domain'
     resourcePathBase = '/' + httpDomain + '/endpoints'
     subscribeURI = '/3302/0/5500'
