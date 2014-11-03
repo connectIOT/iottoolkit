@@ -68,10 +68,10 @@ exampleConstructor = {
         'resourceName': 'services',
         'resourceClass': 'SmartObject'
         },
-    '/nsp_events': {
-        'resourceName': 'nsp-push',
+    '/nspEvents': {
+        'resourceName': 'nspEvents',
         'resourceClass': 'ObservableProperty',
-        'publishesTo': ['mqtt://smartobjectservice.com:1880/nsp_events']
+        'publishesTo': ['mqtt://smartobjectservice.com:1883/nspEvents']
         }
     }
 }
@@ -231,6 +231,8 @@ class SystemInstance(object):
             if observerType is 'bridgesTo':
                 resourceConstructor['pubTopic'] = URIObject.path
                 resourceConstructor['subTopic'] = URIObject.path
+            print resourceConstructor['connection']
+            print resourceConstructor['pubTopic']
 
         elif URIObject.scheme == 'handler':
             resourceConstructor = self._callbackNotifierTemplate.copy()   
@@ -241,6 +243,7 @@ class SystemInstance(object):
             return
             
         #create resource in currentResource.resources['Observers'] container  
+        print resourceConstructor
         newObserver = currentResource.resources['Observers'].create(resourceConstructor) 
 
     def _objectFromPath(self, path, baseObject):
