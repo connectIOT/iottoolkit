@@ -1,4 +1,15 @@
 *.pyc
+
+# Virtualenvironment
+venv
+
+# Eclipse files
 .project
 .pydevproject
 .settings
+
+# vim
+.ropeproject
+
+# Python packaging
+*.egg-info
