@@ -18,24 +18,24 @@ class CoapObjectService(object):
             self._port = 5683 # IETF default port for coap://
         else:
             self._port = port
-            
+
         if baseObject == None:
-            from core.SmartObject import SmartObject
+            from iottoolkit.core.SmartObject import SmartObject
             self._baseObject = SmartObject()
         else:
             self._baseObject = baseObject
-            
+
         self.resources = self._baseObject.resources
-                
+
         self._host = gethostname()
         self._baseObject.Properties.update({'coapService': 'coap://' + self._host + ':' + repr(self._port)})
 
         self._coapHandler = CoapRequestHandler(self._baseObject)
-        self._coapServer = COAPServer(self._host, self._port, self._coapHandler) 
+        self._coapServer = COAPServer(self._host, self._port, self._coapHandler)
         #print 'CoAP Service started at', self._baseObject.Properties.get('coapService')
         #starts thread as daemon, has run method loop
-        
-    @property    
+
+    @property
     def baseObject(self):
         return self._baseObject
 
@@ -44,7 +44,7 @@ class CoapRequestHandler(object):
     def __init__(self,baseObject):
         self._linkCache = {}
         self._baseObject = baseObject
-        
+
     def do_GET(self, path, options=None):
         self._query = None
         self._observing = False
@@ -55,31 +55,31 @@ class CoapRequestHandler(object):
             if number == COAPOption.OBSERVE:
                 self._observing = True
         self._currentResource = self.linkToRef(path, self._baseObject)
-        
+
         if hasattr(self._currentResource, 'serialize'):
             self._contentType = self._currentResource._serializeContentTypes[0]
             return 200, self._currentResource.serialize(self._currentResource.get(self._query), self._contentType), self._contentType
         else:
             self._contentType='application/json'
             return 200, json.dumps(self._currentResource.get()), self._contentType
-    
+
     def do_PUT(self, path, payload, options=None):
         self._currentResource = self.linkToRef(path, self._baseObject)
         if hasattr(self._currentResource, 'serialize'):
             self._contentType=self._currentResource._serializeContentTypes[0]
             self._currentResource.set( self._currentResource.parse(str(payload), self._contentType) )
-            return 200, '', self._contentType     
-        else:    
+            return 200, '', self._contentType
+        else:
             self._contentType='application/json'
             self._currentResource.set(json.loads(str(payload)))
             return 200, '', self._contentType
-    
+
     def do_POST(self, path, payload, flag):
         pass
-    
+
     def do_DELETE(self, path, payload, flag):
         pass
-    
+
     def linkToRef(self, linkPath, baseObject):
         '''
         takes a path string and walks the object tree from a base dictionary
@@ -97,7 +97,7 @@ class CoapRequestHandler(object):
         self._resource = self._currentDict[self._pathElements[-1] ]
         #self._linkCache.update({ self._linkPath : self._resource })
         return self._resource
-        
+
     def getByLink(self, linkPath):
         return self.linkToRef(linkPath).get()
 
@@ -121,11 +121,11 @@ class CoapRequestHandler(object):
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 '''
-added options passed to handler, added Observe (6) to options 
+added options passed to handler, added Observe (6) to options
 '''
 #from webiopi.utils.version import PYTHON_MAJOR
 PYTHON_MAJOR=2
-#from webiopi.utils.logger import info, exception 
+#from webiopi.utils.logger import info, exception
 def info(msg):
     print(msg)
 
@@ -154,7 +154,7 @@ GPIO=None
 def HTTPCode2CoAPCode(code):
     return int(code/100) * 32 + (code%100)
 
-   
+
 class COAPContentFormat():
     FORMATS = {0: "text/plain",
                40: "application/link-format",
@@ -172,7 +172,7 @@ class COAPContentFormat():
             if COAPContentFormat.FORMATS[code] == fmt:
                 return code
         return None
-    
+
     @staticmethod
     def toString(code):
         if code == None:
@@ -180,9 +180,9 @@ class COAPContentFormat():
 
         if code in COAPContentFormat.FORMATS:
             return COAPContentFormat.FORMATS[code]
-        
+
         raise Exception("Unknown content format %d" % code)
-        
+
 
 class COAPOption():
     OPTIONS = {1: "If-Match",
@@ -201,7 +201,7 @@ class COAPOption():
                35: "Proxy-Uri",
                39: "Proxy-Scheme"
                }
-    
+
     IF_MATCH = 1
     URI_HOST = 3
     ETAG = 4
@@ -217,8 +217,8 @@ class COAPOption():
     LOCATION_QUERY = 20
     PROXY_URI = 35
     PROXY_SCHEME = 39
-    
-    
+
+
 class COAPMessage():
     TYPES = ["CON", "NON", "ACK", "RST"]
     CON = 0
@@ -238,19 +238,19 @@ class COAPMessage():
         self.uri_path = ""
         self.content_format = None
         self.payload = None
-        
+
         if uri != None:
             p = urlparse(uri)
             self.host = p.hostname
             if p.port:
                 self.port = int(p.port)
             self.uri_path = p.path
-        
+
     def __getOptionHeader__(self, byte):
         delta  = (byte & 0xF0) >> 4
         length = byte & 0x0F
-        return (delta, length)  
-        
+        return (delta, length)
+
     def __str__(self):
         result = []
         result.append("Version: %s" % self.version)
@@ -266,18 +266,18 @@ class COAPMessage():
         result.append("Payload: %s" % self.payload)
         result.append("")
         return '\n'.join(result)
-        
+
     def getOptionHeaderValue(self, value):
         if value > 268:
             return 14
         if value > 12:
             return 13
         return value
-    
+
     def getOptionHeaderExtension(self, value):
         buff = bytearray()
         v = self.getOptionHeaderValue(value)
-        
+
         if v == 14:
             value -= 269
             buff.append((value & 0xFF00) >> 8)
@@ -288,19 +288,19 @@ class COAPMessage():
             buff.append(value)
 
         return buff
-    
+
     def appendOption(self, buff, lastnumber, option, data):
         delta = option - lastnumber
         length = len(data)
-        
+
         d = self.getOptionHeaderValue(delta)
         l = self.getOptionHeaderValue(length)
-        
+
         b  = 0
-        b |= (d << 4) & 0xF0  
+        b |= (d << 4) & 0xF0
         b |= l & 0x0F
         buff.append(b)
-        
+
         ext = self.getOptionHeaderExtension(delta);
         for b in ext:
             buff.append(b)
@@ -327,13 +327,13 @@ class COAPMessage():
         buff.append(self.code)
         buff.append((self.id & 0xFF00) >> 8)
         buff.append(self.id & 0x00FF)
-        
+
         if self.token:
             for c in self.token:
                 buff.append(c)
 
         lastnumber = 0
-        
+
         if len(self.uri_path) > 0:
             paths = self.uri_path.split("/")
             for p in paths:
@@ -351,9 +351,9 @@ class COAPMessage():
                 data.append((fmt_code & 0xFF00) >> 8)
             data.append(fmt_code & 0x00FF)
             lastnumber = self.appendOption(buff, lastnumber, COAPOption.CONTENT_FORMAT, data)
-            
+
         buff.append(0xFF)
-        
+
         if self.payload:
             if PYTHON_MAJOR >= 3:
                 data = self.payload.encode()
@@ -361,9 +361,9 @@ class COAPMessage():
                 data = bytearray(self.payload)
             for c in data:
                 buff.append(c)
-        
+
         return buff
-    
+
     def parseByteArray(self, buff):
         self.version = (buff[0] & 0xC0) >> 6
         self.type    = (buff[0] & 0x30) >> 4
@@ -375,7 +375,7 @@ class COAPMessage():
         index += token_length
         self.code    = buff[1]
         self.id      = (buff[2] << 8) | buff[3]
-        
+
         number = 0
 
         # process options
@@ -391,12 +391,12 @@ class COAPMessage():
             elif delta == 14:
                 delta += 255 + ((buff[index+offset] << 8) | buff[index+offset+1])
                 offset += 2
-            
+
             # length extended with 1 byte
             if length == 13:
                 length += buff[index+offset]
                 offset += 1
-                
+
             # length extended with 2 buff
             elif length == 14:
                 length += 255 + ((buff[index+offset] << 8) | buff[index+offset+1])
@@ -423,17 +423,17 @@ class COAPMessage():
             index += offset + length
 
         index += 1 # skip 0xFF / end-of-options
-        
+
         if len(buff) > index:
             self.payload = buff[index:]
         else:
             self.payload = ""
-        
+
         for option in self.options:
             (number, value) = option.values()
             if number == COAPOption.URI_PATH:
                 self.uri_path += "/%s" % value
- 
+
 
 class COAPRequest(COAPMessage):
     CODES = {0: None,
@@ -467,7 +467,7 @@ class COAPDelete(COAPRequest):
     def __init__(self, uri):
         COAPRequest.__init__(self, COAPMessage.CON, COAPRequest.DELETE, uri)
 
-class COAPResponse(COAPMessage):    
+class COAPResponse(COAPMessage):
     CODES = {0: None,
              64: "2.00 OK",
              65: "2.01 Created",
@@ -490,7 +490,7 @@ class COAPResponse(COAPMessage):
              162: "5.02 Bad Gateway",
              163: "5.03 Service Unavailable",
              164: "5.04 Gateway Timeout",
-             165: "5.05 Proxying Not Supported"            
+             165: "5.05 Proxying Not Supported"
             }
 
     # 2.XX
@@ -500,7 +500,7 @@ class COAPResponse(COAPMessage):
     VALID   = 67
     CHANGED = 68
     CONTENT = 69
-    
+
     # 4.XX
     BAD_REQUEST         = 128
     UNAUTHORIZED        = 129
@@ -512,7 +512,7 @@ class COAPResponse(COAPMessage):
     PRECONDITION_FAILED = 140
     ENTITY_TOO_LARGE    = 141
     UNSUPPORTED_CONTENT = 143
-    
+
     # 5.XX
     INTERNAL_ERROR          = 160
     NOT_IMPLEMENTED         = 161
@@ -520,7 +520,7 @@ class COAPResponse(COAPMessage):
     SERVICE_UNAVAILABLE     = 163
     GATEWAY_TIMEOUT         = 164
     PROXYING_NOT_SUPPORTED  = 165
-    
+
     def __init__(self):
         COAPMessage.__init__(self)
 
@@ -529,7 +529,7 @@ class COAPClient():
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.settimeout(1.0)
         self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-        
+
     def sendRequest(self, message):
         data = message.getBytes();
         sent = 0
@@ -559,7 +559,7 @@ class COAPServer(threading.Thread):
         self.running = True
         self.daemon = True
         self.start()
-        
+
     def run(self):
         info("CoAP Server at coap://%s:%s/" % (self.host, self.port))
         while self.running == True:
@@ -575,26 +575,26 @@ class COAPServer(threading.Thread):
                 responseBytes = coapResponse.getBytes()
                 self.socket.sendto(responseBytes, client)
                 self.logger.debug('"%s %s CoAP/%.1f" %s -' % (coapRequest.CODES[coapRequest.code], coapRequest.uri_path, coapRequest.version, coapResponse.CODES[coapResponse.code]))
-                
+
             except socket.timeout as e:
                 continue
             except Exception as e:
                 if self.running == True:
                     exception(e)
-            
+
         info("CoAP Server stopped")
-    
+
     def enableMulticast(self):
         while not self.running:
             pass
         mreq = struct.pack("4sl", socket.inet_aton(self.multicast_ip), socket.INADDR_ANY)
         self.socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         info("CoAP Server at coap://%s:%s/ (MULTICAST)" % (self.multicast_ip, self.port))
-                
+
     def stop(self):
         self.running = False
         self.socket.close()
-        
+
     def processMessage(self, request, response):
         if request.type == COAPMessage.CON:
             response.type = COAPMessage.ACK
@@ -606,7 +606,7 @@ class COAPServer(threading.Thread):
 
         response.id = request.id
         response.uri_path = request.uri_path
-        
+
         if request.code == COAPRequest.GET:
             self.handler.do_GET(request, response)
         elif request.code == COAPRequest.PUT:
@@ -615,11 +615,11 @@ class COAPServer(threading.Thread):
             response.code = COAPResponse.NOT_IMPLEMENTED
         else:
             exception(Exception("Received CoAP Response : %s" % response))
-        
+
 class COAPHandler():
     def __init__(self, handler):
         self.handler = handler
-    
+
     def do_GET(self, request, response):
         try:
             (code, body, contentType) = self.handler.do_GET(request.uri_path[1:], request.options)
@@ -637,7 +637,7 @@ class COAPHandler():
         except Exception as e:
             response.code = COAPResponse.INTERNAL_ERROR
             raise e
-        
+
     def do_PUT(self, request, response):
         try:
             (code, body, contentType) = self.handler.do_PUT(request.uri_path[1:], request.payload, request.options)
@@ -655,4 +655,4 @@ class COAPHandler():
         except Exception as e:
             response.code = COAPResponse.INTERNAL_ERROR
             raise e
-        
+

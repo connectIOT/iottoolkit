@@ -1,26 +1,26 @@
 '''
 Created on Dec 12, 2013
 
-Create services from a service model instance, create objects from an object model instance 
-How are base objects mapped to services? 
+Create services from a service model instance, create objects from an object model instance
+How are base objects mapped to services?
 This file creates a service object that has multiple services and a single object tree
-There could be a service creation service where POSTing this descriptor would build objects 
-and create service instance, and this will be built as function sets, probably part of 
+There could be a service creation service where POSTing this descriptor would build objects
+and create service instance, and this will be built as function sets, probably part of
 Resource Directory (RD)
 
 @author: mjkoster
 '''
-from core.RESTfulResource import RESTfulResource
-from core.SmartObject import SmartObject
+from iottoolkit.core.RESTfulResource import RESTfulResource
+from iottoolkit.core.SmartObject import SmartObject
 from rdflib.term import Literal, URIRef
-from interfaces.HttpObjectService import HttpObjectService
-from interfaces.CoapObjectService import CoapObjectService
+from iottoolkit.interfaces.HttpObjectService import HttpObjectService
+from iottoolkit.interfaces.CoapObjectService import CoapObjectService
 from time import sleep
 from urlparse import urlparse
 import subprocess
 import rdflib
 
-#workaround to register rdf JSON plugins 
+#workaround to register rdf JSON plugins
 from rdflib.plugin import Serializer, Parser
 rdflib.plugin.register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
 rdflib.plugin.register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
@@ -44,14 +44,14 @@ exampleConstructor = {
         'IPV4': '',
         'root': '/',
         'discovery': '/'
-                    },                
+                    },
     'localCoAP': {
         'scheme': 'coap',
         'FQDN': 'localhost',
         'port': 5683,
         'IPV4': '',
         'root': '/',
-        'discovery': '/' 
+        'discovery': '/'
                 }
              },
 
@@ -140,7 +140,7 @@ exampleConstructor = {
         'subscribesTo': ['mqtt://smartobjectservice.com:1883/sensors/rhvWeather-01/daily_rain'],
        }
     }
-                      
+
 }
 
 class SystemInstance(object):
@@ -154,21 +154,21 @@ class SystemInstance(object):
     }
     '''
     def __init__(self, systemConstructor):
-        
+
         self._service_metadata = systemConstructor['service_metadata']
         self._services = systemConstructor['services']
         self._object_metadata = systemConstructor['object_metadata']
         self._objects = systemConstructor['objects']
-        
+
         self._baseObject = None
-        
+
         self._defaultResources = {
                                   'SmartObject': ['Description', 'Agent'],
                                   'ObservableProperty': ['Description', 'Observers']
                                   }
 
         self._observerTypes = ['subscribesTo', 'publishesTo', 'bridgesTo', 'handledBy']
-        
+
         self._observerSchemes = ['http', 'coap', 'mqtt', 'handler']
 
         self._mqttObserverTemplate = {
@@ -180,25 +180,25 @@ class SystemInstance(object):
                                       'keepAlive': 60,
                                       'QoS': 0
                                       }
-        
+
         self._httpPublisherTemplate = {
                                        'resourceName': 'httpPublisher',
                                        'resourceClass': 'httpPublisher',
                                        'targetURI': 'http://localhost:8000/'
                                        }
-        
+
         self._httpSubscriberTemplate = {
                                         'resourceName': 'httpSubscriber',
                                         'resourceClass': 'httpSubscriber',
                                         'ObserverURI': 'http://localhost:8000/',
                                         }
-        
+
         self._coapPublisherTemplate = {
                                        'resourceName': 'coapPublisher',
                                        'resourceClass': 'coapPublisher',
                                        'targetURI': 'coap://localhost:5683/'
                                        }
-        
+
         self._coapSubscriberTemplate = {
                                         'resourceName': 'coapSubscriber',
                                         'resourceClass': 'coapSubscriber',
@@ -213,15 +213,15 @@ class SystemInstance(object):
 
         '''
         make objects from object models first
-        make list sorted by path element count + length for import from graph, 
+        make list sorted by path element count + length for import from graph,
         could count a split list but this should be the same if we eat slashes somewhere
-        having the root object called '/' and '/' as the separator is extra work 
+        having the root object called '/' and '/' as the separator is extra work
         '''
         self._resourceList = sorted( self._objects.keys(), key=lambda s:s.count('/') )
         self._resourceList = sorted( self._resourceList, key=lambda s:len(s))
         for self._resourceLink in self._resourceList:
             self._resourceDescriptor = self._objects[self._resourceLink]
-            # see if base object needs to be created. 
+            # see if base object needs to be created.
             if self._resourceLink is '/' and self._resourceDescriptor['resourceClass'] is 'SmartObject' and self._baseObject is None:
                 self._newResource = SmartObject()
                 self._baseObject = self._newResource
@@ -236,7 +236,7 @@ class SystemInstance(object):
                                         'resourceName': self._defaultResource,
                                         'resourceClass': self._defaultResource
                                         })
-                    if self._defaultResource is 'Description': 
+                    if self._defaultResource is 'Description':
                         self._newChildResource.create(self._graphFromModel(self._resourceLink, self._resourceDescriptor))
                         self._newResource.create({'resourceName':'.well-known', 'resourceClass':'Agent'})\
                         .create({'resourceName':'core', 'resourceClass':'LinkFormatProxy'})
@@ -251,14 +251,14 @@ class SystemInstance(object):
         '''
         # make this a service Object (RESTfulResource) with dict as constructor
         self._serviceRegistry = self._objectFromPath('/services', self._baseObject)
-        self._serviceDescription = self._objectFromPath('/services/Description', self._baseObject)        
-    
+        self._serviceDescription = self._objectFromPath('/services/Description', self._baseObject)
+
         for self._serviceName in self._services:
             self._newService = ServiceObject(self._serviceName, self._services[self._serviceName], self._baseObject)
             self._serviceRegistry.resources.update({self._serviceName:self._newService})
             self._serviceDescription.set(self._graphFromModel(self._serviceName, self._services[self._serviceName]))
-            
-            
+
+
     def _graphFromModel(self, link, meta):
         # make rdf-json from the model and return RDF graph for loading into Description
         g=rdflib.Graph()
@@ -279,7 +279,7 @@ class SystemInstance(object):
             if observerType is 'subscribesTo':
                 resourceConstructor = self._httpSubscriberTemplate.copy()
                 resourceConstructor['observerURI'] = observerURI
-    
+
         elif URIObject.scheme == 'coap':
             if observerType is 'publishesTo':
                 resourceConstructor = self._coapPublisherTemplate.copy()
@@ -287,9 +287,9 @@ class SystemInstance(object):
             if observerType is 'subscribesTo':
                 resourceConstructor = self._coapSubscriberTemplate.copy()
                 resourceConstructor['observerURI'] = observerURI
-    
+
         elif URIObject.scheme == 'mqtt':
-            resourceConstructor = self._mqttObserverTemplate.copy() 
+            resourceConstructor = self._mqttObserverTemplate.copy()
             resourceConstructor['connection'] = URIObject.netloc
             if observerType is 'publishesTo':
                 resourceConstructor['pubTopic'] = URIObject.path
@@ -300,15 +300,15 @@ class SystemInstance(object):
                 resourceConstructor['subTopic'] = URIObject.path
 
         elif URIObject.scheme == 'handler':
-            resourceConstructor = self._callbackNotifierTemplate.copy()   
+            resourceConstructor = self._callbackNotifierTemplate.copy()
             resourceConstructor['handlerURI'] = observerURI
-            
+
         else:
             print 'no scheme', URIObject.scheme
             return
-            
-        #create resource in currentResource.resources['Observers'] container  
-        newObserver = currentResource.resources['Observers'].create(resourceConstructor) 
+
+        #create resource in currentResource.resources['Observers'] container
+        newObserver = currentResource.resources['Observers'].create(resourceConstructor)
 
     def _objectFromPath(self, path, baseObject):
     # fails if resource doesn't exist
@@ -325,7 +325,7 @@ class ServiceObject(RESTfulResource):
                                'resourceName': serviceName,
                                'resourceClass': serviceConstructor['scheme']
                                }
-        
+
         RESTfulResource.__init__(self, baseObject, self._resourceConstructor )
         self._serviceConstructor = serviceConstructor
         # TODO collect IP addresses and update the constructor
@@ -334,16 +334,16 @@ class ServiceObject(RESTfulResource):
             (self._objectFromPath(self._serviceConstructor['root'], baseObject), port=self._serviceConstructor['port'])
             URLObject= urlparse(self._httpService._baseObject.Properties.get('httpService'))
             self._serviceConstructor['FQDN'] = URLObject.netloc.split(':')[0]
-            
+
         if self._serviceConstructor['scheme'] is 'coap':
             self._coapService = CoapObjectService\
             (self._objectFromPath(self._serviceConstructor['root'], baseObject), port=self._serviceConstructor['port'])
             URLObject= urlparse(self._coapService._baseObject.Properties.get('coapService'))
             self._serviceConstructor['FQDN'] = URLObject.netloc.split(':')[0]
-                
+
         if serviceConstructor['scheme'] is 'mqtt':
             subprocess.call('mosquitto -d -p ', self._serviceConstructor['port'])
-            
+
         self._set(self._serviceConstructor)
 
     def _objectFromPath(self, path, baseObject):
@@ -361,11 +361,11 @@ if __name__ == '__main__' :
     make an instance using the example constructor
     '''
     system = SystemInstance(exampleConstructor)
-    
+
     try:
     # register handlers etc.
         while 1: sleep(1)
     except KeyboardInterrupt: pass
     print 'got KeyboardInterrupt'
 
-    
+
