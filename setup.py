@@ -13,7 +13,7 @@ setup(
     keywords='IoT',
     author='Michael J Koster',
     url='',
-    license='AGPL',
+    license='LGPL',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     include_package_data=True,
     zip_safe=False,
