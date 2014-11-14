@@ -1,9 +1,9 @@
 '''
 Created on Oct 18, 2012
 
-Create a RESTlite instance of a http server for SmartObjects. 
-based on wsgi/restlite with the restObject extensions to match object path segments 
-to resource names e.g. the URL path: /object1/barometricPressure/Description/Observers 
+Create a RESTlite instance of a http server for SmartObjects.
+based on wsgi/restlite with the restObject extensions to match object path segments
+to resource names e.g. the URL path: /object1/barometricPressure/Description/Observers
 maps to the python API identifier: object1.barometricPressure.Description.Observers
 
 @author: mjkoster
@@ -22,12 +22,12 @@ class Request(restObject.Request):
     def __init__(self, env, start_response):
         self.env, self.start_response = env, start_response
         restObject.Request.__init__(self.env, self.start_response)
-        
+
 
 class RestObject(restObject.RestObject):
     def __init__(self, rootObject, users):
         restObject.RestObject.__init__(self, rootObject, users)
-        
+
     def contentTypeNegotiate(self, accepts, providedTypes):
         accepts = accepts.split(',')
         prefs = []
@@ -47,17 +47,17 @@ class RestObject(restObject.RestObject):
             return providedTypes[0] # return our favorite type if we don't have a preferred type and */* is allowed
         else:
             raise restlite.Status('415 Unsupported Media Type') # no applicable type and client doesn't want whatever
-        
+
     def _handleGET(self, currentResource):
         # if it's a complex structure class, invoke the serializer
-        
+
         if hasattr(currentResource,'serialize') : # see if the resource has a serialize method
             responseType = self.contentTypeNegotiate(self.env['HTTP_ACCEPT'], currentResource.serializeContentTypes() )
-            self.start_response('200 OK', [('Content-Type', responseType)]) 
+            self.start_response('200 OK', [('Content-Type', responseType)])
             return currentResource.serialize( currentResource.get(), responseType )
         else:
             return restObject.RestObject._handleGET(self, currentResource) # default GET does JSON and XML
-    
+
     def _handlePUT(self, currentResource):
         if hasattr(currentResource, 'parse') :
             if self.env['CONTENT_TYPE'] in currentResource.parseContentTypes() :
@@ -66,7 +66,7 @@ class RestObject(restObject.RestObject):
                 raise restlite.Status('415 Unsupported Media Type')
         else :
             restObject.RestObject._handlePUT(self, currentResource) # default PUT
-    
+
     def _handlePOST(self, currentResource):
         if hasattr(currentResource, 'parse') :
             if self.env['CONTENT_TYPE'] in currentResource.parseContentTypes() :
@@ -75,7 +75,7 @@ class RestObject(restObject.RestObject):
                 raise restlite.Status('415 Unsupported Media Type')
         else :
             restObject.RestObject._handlePOST(self, currentResource) # default PUT
-                
+
     def _handleDELETE(self, currentResource):
         if hasattr(currentResource, 'parse') :
             if self.env['CONTENT_TYPE'] in currentResource.parseContentTypes() :
@@ -99,59 +99,59 @@ def bind(rootObject, users=None):
 
 class HttpHandler(object):
     def __init__(self, baseObject): # get a handle to the Object Service root dictionary
-        self.objectHandler = bind(baseObject, users=None) 
-        #bind to root resource dictionary passed to constructor  
+        self.objectHandler = bind(baseObject, users=None)
+        #bind to root resource dictionary passed to constructor
         #bind returns the RestObject handler which uses the Request object
         # the handler calls the overriding _handleXX methods in this module
         self.routes = [(r'GET /favicon.ico$', self.favicon_handler),(r'GET,PUT,POST,DELETE ', self.objectHandler )]
-        return 
-    
+        return
+
     def favicon_handler(self, env, start_response) :
-        start_response('200 OK', [('Content-Type', 'image/gif')]) 
+        start_response('200 OK', [('Content-Type', 'image/gif')])
         try:
             with open('favicon.ico', 'rb') as f: result = f.read()
         except: raise restlite.Status, '400 Error Reading File'
         return(result)
 
-                  
-class HttpObjectService(object):   
-    def __init__(self, baseObject=None, port=None): 
+
+class HttpObjectService(object):
+    def __init__(self, baseObject=None, port=None):
 
         if port == None:
             self._port=8000
         else:
             self._port = port  # default port 8000
-            
+
         if baseObject == None:
-            from core.SmartObject import SmartObject
+            from iottoolkit.core.SmartObject import SmartObject
             self._baseObject = SmartObject()
         else:
             self._baseObject = baseObject
-            
+
         self.resources = self._baseObject.resources
-        
+
         self.start(self._port)
-        
-    @property        
+
+    @property
     def baseObject(self):
         return self._baseObject
-    
-    def start(self, port=None): 
+
+    def start(self, port=None):
         if port==None:
             self._port = 8000 # default port 8000
         else:
             self._port=port # override port on start if supplied
-            
+
         httpThread = threading.Thread(target = self._startHttpObjectService)
         httpThread.daemon = True
         httpThread.start()
         self._baseObject.Properties.update({'httpService': 'http://' + gethostname() + ':' + repr(self._port)})
         print 'HTTP server started at', self._baseObject.Properties.get('httpService')
-       
-       
+
+
     def _startHttpObjectService(self):
         from wsgiref.simple_server import make_server
-        # HttpObjectService constructor method creates a Smart Object service and 
+        # HttpObjectService constructor method creates a Smart Object service and
         # returns a constructor for a restlite router instance
         self.httpObjectHandler = HttpHandler(self._baseObject)
         self.httpd = make_server('', self._port, restlite.router(self.httpObjectHandler.routes))
