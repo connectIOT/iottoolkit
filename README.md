@@ -5,6 +5,10 @@ IoT Toolkit
 IoT Toolkit is a reference 
 implementation of the Smart Object API described at:
 
+http://www.slideshare.net/michaeljohnkoster/iottoolkit-wot
+
+and referenced in detain at:
+
 http://iot-datamodels.blogspot.com
 
 The wiki in this repository contains introductory material, status, and roadmap
