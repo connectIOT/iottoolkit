@@ -7,7 +7,7 @@ implementation of the Smart Object API described at:
 
 http://www.slideshare.net/michaeljohnkoster/iottoolkit-wot
 
-and referenced in detain at:
+and referenced in detail at:
 
 http://iot-datamodels.blogspot.com
 
