@@ -23,7 +23,7 @@ Uses modified version of restlite.py for http server interface, licensed under L
 
 http://www.gnu.org/licenses/lgpl.html
 
-Copyright 2012, 2013, 2014, 2015 Michael J Koster
+Copyright 2012, 2013, 2014, 2015, 2016, 2017 Michael J Koster
 
 refactored from the mjkoster/SmartObject repository on 12/5/2013
 
