@@ -24,6 +24,7 @@ if __name__ == '__main__' :
     #actuateURI = '/11101/0/5901'
     actuateURI = '/11100/0/5900' # use the chainable LED or LED strip
     baseURL = httpServer + resourcePathBase
+    pushEventPath = 'http://smartobjectservice.com:8000/nspEvents'
     
     username = 'connected-home'
     password = 'secret'
@@ -79,6 +80,16 @@ if __name__ == '__main__' :
             response = httpConnection.getresponse()
             print response.status, response.reason
             httpConnection.close()
+
+    def setPushURL(pushEventPath):
+            path = httpServer + '/' + httpDomain + '/notification/push-url'
+            print "set: " + path + ' body= ' + pushEventPath
+            uriObject = urlparse(path)
+            httpConnection = httplib.HTTPConnection(uriObject.netloc)
+            httpConnection.request('PUT',   uriObject.path, pushEventPath, \
+                                     {"Content-Type" : "application/json", "Authorization": ("Basic %s" % auth)})
+            response = httpConnection.getresponse()
+            print response.status, response.reason
 
     def longPoll(channelPath):
         print 'poll: ' + channelPath
@@ -138,8 +149,12 @@ if __name__ == '__main__' :
     
     subscribe(subscribeURI)
     
+    setPushURL(pushEventPath)
+    
     try:
-        longPoll(httpServer + '/' + httpDomain + '/notification/pull')
+        while 1:
+            pass
+        #longPoll(httpServer + '/' + httpDomain + '/notification/pull')
         
     except KeyboardInterrupt: pass
     print 'got KeyboardInterrupt'
