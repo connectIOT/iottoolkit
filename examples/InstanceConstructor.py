@@ -243,7 +243,6 @@ class SystemInstance(object):
             return
             
         #create resource in currentResource.resources['Observers'] container  
-        print resourceConstructor
         newObserver = currentResource.resources['Observers'].create(resourceConstructor) 
 
     def _objectFromPath(self, path, baseObject):
